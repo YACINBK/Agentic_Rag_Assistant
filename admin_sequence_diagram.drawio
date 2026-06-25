@@ -1,0 +1,202 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net"><diagram name="Admin Ingestion Sequence" id="admin_seq"><mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="1100" math="0" shadow="0"><root>
+  <mxCell id="0" />
+  <mxCell id="1" parent="0" />
+  <mxCell id="ll_Admin" value="Admin" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+    <mxGeometry x="40" y="40" width="120" height="40" as="geometry" />
+  </mxCell>
+  <mxCell id="line_Admin" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;" edge="1" parent="1">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="100" y="80" as="sourcePoint" />
+      <mxPoint x="100" y="1000" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="ll_Nginx" value="Nginx" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+    <mxGeometry x="190" y="40" width="120" height="40" as="geometry" />
+  </mxCell>
+  <mxCell id="line_Nginx" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;" edge="1" parent="1">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="250" y="80" as="sourcePoint" />
+      <mxPoint x="250" y="1000" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="ll_FastAPI" value="FastAPI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+    <mxGeometry x="340" y="40" width="120" height="40" as="geometry" />
+  </mxCell>
+  <mxCell id="line_FastAPI" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;" edge="1" parent="1">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="400" y="80" as="sourcePoint" />
+      <mxPoint x="400" y="1000" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="ll_Keycloak" value="Keycloak" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+    <mxGeometry x="490" y="40" width="120" height="40" as="geometry" />
+  </mxCell>
+  <mxCell id="line_Keycloak" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;" edge="1" parent="1">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="550" y="80" as="sourcePoint" />
+      <mxPoint x="550" y="1000" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="ll_PostgreSQL" value="PostgreSQL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+    <mxGeometry x="640" y="40" width="120" height="40" as="geometry" />
+  </mxCell>
+  <mxCell id="line_PostgreSQL" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;" edge="1" parent="1">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="700" y="80" as="sourcePoint" />
+      <mxPoint x="700" y="1000" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="ll_Redis" value="Redis" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+    <mxGeometry x="790" y="40" width="120" height="40" as="geometry" />
+  </mxCell>
+  <mxCell id="line_Redis" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;" edge="1" parent="1">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="850" y="80" as="sourcePoint" />
+      <mxPoint x="850" y="1000" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="ll_Celery" value="Celery" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+    <mxGeometry x="940" y="40" width="120" height="40" as="geometry" />
+  </mxCell>
+  <mxCell id="line_Celery" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;" edge="1" parent="1">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="1000" y="80" as="sourcePoint" />
+      <mxPoint x="1000" y="1000" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="ll_Qdrant" value="Qdrant" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+    <mxGeometry x="1090" y="40" width="120" height="40" as="geometry" />
+  </mxCell>
+  <mxCell id="line_Qdrant" style="endArrow=none;dashed=1;html=1;strokeColor=#000000;" edge="1" parent="1">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="1150" y="80" as="sourcePoint" />
+      <mxPoint x="1150" y="1000" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_100" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="1. POST /upload (document, meta)">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="100" y="120" as="sourcePoint" />
+      <mxPoint x="250" y="120" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_101" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="2. forward request">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="250" y="170" as="sourcePoint" />
+      <mxPoint x="400" y="170" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_102" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="3. validate JWT">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="400" y="220" as="sourcePoint" />
+      <mxPoint x="550" y="220" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_103" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;" edge="1" parent="1" value="4. JWT valid (Admin Role)">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="550" y="270" as="sourcePoint" />
+      <mxPoint x="400" y="270" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_104" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="5. write metadata (status: pending, uploaded_by)">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="400" y="320" as="sourcePoint" />
+      <mxPoint x="700" y="320" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_105" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;" edge="1" parent="1" value="6. return document_id">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="700" y="370" as="sourcePoint" />
+      <mxPoint x="400" y="370" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_106" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="7. publish AMQP task (document_id)">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="400" y="420" as="sourcePoint" />
+      <mxPoint x="850" y="420" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_107" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;" edge="1" parent="1" value="8. task queued">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="850" y="470" as="sourcePoint" />
+      <mxPoint x="400" y="470" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_108" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;" edge="1" parent="1" value="9. 202 Accepted (processing in background)">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="400" y="520" as="sourcePoint" />
+      <mxPoint x="250" y="520" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_109" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;" edge="1" parent="1" value="10. 202 Accepted">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="250" y="570" as="sourcePoint" />
+      <mxPoint x="100" y="570" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="div_110" value="=== Asynchronous Document Ingestion Pipeline ===" style="shape=rect;html=1;fillColor=#f9f9f9;strokeColor=#333333;dashed=1;align=center;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+    <mxGeometry x="40" y="640" width="1180" height="30" as="geometry" />
+  </mxCell>
+  <mxCell id="msg_111" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="11. poll / consume task">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="1000" y="700" as="sourcePoint" />
+      <mxPoint x="850" y="700" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_112" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;" edge="1" parent="1" value="12. task (document_id)">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="850" y="750" as="sourcePoint" />
+      <mxPoint x="1000" y="750" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_113" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="13. read &amp; chunk document">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="1000" y="800" as="sourcePoint" />
+      <mxPoint x="1000" y="830" as="targetPoint" />
+      <Array as="points">
+        <mxPoint x="1050" y="800" />
+        <mxPoint x="1050" y="830" />
+      </Array>
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_114" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="14. generate embeddings">
+    <mxGeometry relative="1" as="geometry">
+      <mxPoint x="1000" y="850" as="sourcePoint" />
+      <mxPoint x="1000" y="880" as="targetPoint" />
+      <Array as="points">
+        <mxPoint x="1050" y="850" />
+        <mxPoint x="1050" y="880" />
+      </Array>
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_115" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="15. index vectors">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="1000" y="910" as="sourcePoint" />
+      <mxPoint x="1150" y="910" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_116" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;" edge="1" parent="1" value="16. vectors indexed (success)">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="1150" y="960" as="sourcePoint" />
+      <mxPoint x="1000" y="960" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_117" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="17. update metadata (status: done, chunk_count, last_ingested_at)">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="1000" y="1010" as="sourcePoint" />
+      <mxPoint x="700" y="1010" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_118" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;" edge="1" parent="1" value="18. metadata updated">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="700" y="1060" as="sourcePoint" />
+      <mxPoint x="1000" y="1060" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+  <mxCell id="msg_119" style="endArrow=classic;html=1;strokeColor=#000000;fontSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" value="19. write task result (Result Backend)">
+    <mxGeometry relative="1" as="geometry" x="0" y="0">
+      <mxPoint x="1000" y="1110" as="sourcePoint" />
+      <mxPoint x="850" y="1110" as="targetPoint" />
+    </mxGeometry>
+  </mxCell>
+</root></mxGraphModel></diagram></mxfile>
