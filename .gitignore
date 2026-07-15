@@ -39,3 +39,24 @@ node_modules/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# State files (loop engineering)
+test_results/*.txt
+reviews/*.md
+
+# Alembic auto-generated
+alembic/versions/*.py
+!alembic/versions/.gitkeep
+
+# Diagrams
+diags/
+diags_backup/
+
+# Resumes / temporary developer handoff text files
+*resume*.txt
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
