@@ -8,6 +8,8 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
     "sse-starlette>=2.0",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
     # -- LLM orchestration --
     "langgraph>=0.2",
     "litellm>=1.50",
@@ -19,9 +21,14 @@ dependencies = [
     "alembic>=1.14",
     # -- Task queue --
     "celery[redis]>=5.4",
-    # -- Auth --
-    "python-jose[cryptography]>=3.3",
+    # -- Auth (session-based OIDC via authlib) --
+    "authlib>=1.3",
     "httpx>=0.27",
+    "itsdangerous>=2.1",
+    # -- CSRF --
+    "starlette-csrf>=3.0",
+    # -- Redis (session store + broker) --
+    "redis[hiredis]>=5.0",
     # -- Embeddings tokenizer (BGE-M3 chunk measurement) --
     "transformers>=4.45",
     # -- Settings --
