@@ -61,12 +61,12 @@ rag_assistant/
 ├── progress.md                      # Current sprint state
 │
 ├── app/
-│   ├── main.py                      # FastAPI app entry (/health, structlog init)
+│   ├── main.py                      # FastAPI app: lifespan, CSRF, auth routes, templates, /health
 │   ├── core/
 │   │   ├── base_node.py             # BaseNode ABC: name property + execute(state) → state
 │   │   ├── state.py                 # PipelineState TypedDict + ChunkPayload
 │   │   ├── settings.py              # Pydantic Settings — model/service config from .env
-│   │   ├── security.py              # BaseAuthService ABC + TokenClaims dataclass
+│   │   ├── security.py              # BaseAuthService ABC + UserSession dataclass
 │   │   ├── logging.py              # structlog processor chain config
 │   │   ├── exceptions.py            # PipelineError, AuthenticationError, AuthorizationError, ...
 │   │   ├── services/
@@ -100,11 +100,22 @@ rag_assistant/
 │   │   └── routes/
 │   │       └── __init__.py
 │   │
-│   └── tasks/
-│       ├── __init__.py
-│       ├── worker.py                # Celery app creation + config
-│       ├── ingestion.py             # Document ingestion task (async via Redis)
-│       └── cache_cleanup.py         # TTL-based semantic cache purge (Celery beat)
+│   ├── tasks/
+│   │   ├── __init__.py
+│   │   ├── worker.py                # Celery app creation + config
+│   │   ├── ingestion.py             # Document ingestion task (async via Redis)
+│   │   └── cache_cleanup.py         # TTL-based semantic cache purge (Celery beat)
+│   │
+│   ├── templates/
+│   │   ├── base.html                # Layout: nav, HTMX script, content block
+│   │   ├── pages/                   # Full-page templates (login, dashboard, ...)
+│   │   ├── partials/                # HTMX partial responses
+│   │   ├── components/              # Reusable Jinja2 include blocks
+│   │   └── macros/                  # Jinja2 macros
+│   │
+│   └── static/
+│       ├── css/base.css             # Base stylesheet
+│       └── js/                      # Client-side JS (empty, ready for use)
 │
 ├── tests/
 │   ├── conftest.py                  # Shared fixtures: state factories + mock patterns
@@ -151,7 +162,7 @@ rag_assistant/
 | `base_node.py` | ABC with `name` property and `async execute(state) → state`. Every pipeline node inherits this. |
 | `state.py` | `PipelineState` TypedDict — the single object flowing through all LangGraph nodes. `ChunkPayload` TypedDict for retrieved chunk metadata. |
 | `settings.py` | `Settings(BaseSettings)` — loads all config from `.env`. Model names, URLs, thresholds. Single source of truth. |
-| `security.py` | `BaseAuthService` ABC — `authenticate(request)` and `authorize(claims, permission)`. `TokenClaims` dataclass for parsed session data. |
+| `security.py` | `BaseAuthService` ABC — `get_authorization_url`, `handle_callback`, `get_current_user`, `logout`. `UserSession` dataclass for parsed session data. |
 | `logging.py` | structlog config — JSON output, bound context (user_id, request_id), stdlib integration. |
 | `exceptions.py` | Typed hierarchy: `PipelineError` (base), `AuthenticationError`, `AuthorizationError`, `RetrievalError`, `GenerationError`, `FaithfulnessError`. |
 | `services/llm.py` | `BaseLLMService` — `async complete(model, messages, **kwargs) → str` |
@@ -181,7 +192,7 @@ All models map to CLAUDE.md §10. Key constraints:
 
 | Service | Image | Port | Purpose |
 |---|---|---|---|
-| `backend` | Custom (Dockerfile) | 8000 | FastAPI — serves HTMX UI + API + SSE directly via Uvicorn |
+| `backend` | Custom (Dockerfile) | 8000 | FastAPI — serves HTMX UI + API + SSE directly via Uvicorn. Session middleware + CSRF. |
 | `celery-worker` | Same image | — | Async task execution (ingestion, heavy processing) |
 | `celery-beat` | Same image | — | Periodic tasks (cache TTL cleanup, hourly) |
 | `postgres` | postgres:16-alpine | 5432 | Relational data (users, roles, documents, audit log) |
@@ -242,6 +253,37 @@ See CLAUDE.md §11 for the full specification. Summary of what's on disk:
 ---
 
 ## 9. Changelog
+
+### [2025-07-17] — Session-Based OIDC Auth Implementation
+
+**Scope:** Full implementation of session-based OIDC auth flow. Replaced JWT-validation stub with working authlib + Redis session implementation.
+
+**Changes:**
+- Rewrote `app/core/security.py` — new ABC methods: `get_authorization_url`, `handle_callback`, `get_current_user`, `logout`. Replaced `TokenClaims` with `UserSession` dataclass (user_id, keycloak_id, email, role, is_admin, is_owner).
+- Rewrote `app/services/auth.py` — `KeycloakAuthService` using `authlib.integrations.httpx_client.AsyncOAuth2Client` with PKCE. Server-side sessions in Redis (configurable TTL). OAuth state stored in Redis (5 min TTL). Lazy user/role sync to PostgreSQL on login.
+- Rewrote `app/main.py` — FastAPI lifespan (Redis init/cleanup), CSRF middleware (`starlette-csrf`), Jinja2 templates, static file serving, auth routes (`/auth/login`, `/auth/start`, `/auth/callback`, `/auth/logout`), session cookie management.
+- Created `app/templates/` — base layout (HTMX-boosted, nav), login page, dashboard page.
+- Created `app/static/css/base.css` — minimal styling for nav, login, dashboard.
+- Added `SECRET_KEY` and `SESSION_TTL_SECONDS` to settings and `.env.example`.
+- Fixed lint issues in models: unused imports, forward reference warnings (added `TYPE_CHECKING` guards), `== True` → `.is_(True)`.
+- Removed stale `python-jose` from venv (was still installed despite pyproject.toml removal).
+- Updated `app/core/exceptions.py` — `AuthenticationError` docstring updated from "JWT validation" to "OIDC flow or session validation".
+
+**Template structure:**
+```
+app/templates/
+├── base.html              # Layout: nav + content block + HTMX script
+├── pages/
+│   ├── login.html         # "Sign in with Keycloak" button
+│   └── dashboard.html     # Post-login landing (role display, search link)
+├── partials/              # HTMX partial responses (empty, ready for use)
+├── components/            # Reusable Jinja2 components (empty, ready for use)
+└── macros/                # Jinja2 macros (empty, ready for use)
+```
+
+**No Caddy/Nginx:** Confirmed no proxy layer in code or docker-compose. Docs mention Caddy as a future option only — nothing to remove.
+
+---
 
 ### [2025-07-16] — HTMX Monolith Migration
 
