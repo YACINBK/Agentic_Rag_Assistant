@@ -1,4 +1,5 @@
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -6,6 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.core.models.base import Base
+
+if TYPE_CHECKING:
+    from app.core.models.role import Role
 
 
 class User(Base):
@@ -27,5 +31,5 @@ class User(Base):
     role: Mapped["Role"] = relationship(back_populates="users")
 
     __table_args__ = (
-        Index("idx_single_owner", "is_owner", unique=True, postgresql_where=(is_owner == True)),
+        Index("idx_single_owner", "is_owner", unique=True, postgresql_where=(is_owner.is_(True))),
     )

@@ -176,8 +176,6 @@ class KeycloakAuthService(BaseAuthService):
             user.role_id = role.id
             await self._db.flush()
 
-        await self._db.commit()
-
         return UserSession(
             user_id=str(user.id),
             keycloak_id=keycloak_id,
