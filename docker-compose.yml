@@ -1,34 +1,17 @@
 services:
 
-  # ── Reverse Proxy ──
-  nginx:
-    image: nginx:1.27-alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - backend
-      - frontend
-
-  # ── Frontend ──
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    expose:
-      - "3000"
-    depends_on:
-      - backend
-
-  # ── Backend API ──
+  # ── FastAPI (serves UI + API + SSE) ──
   backend:
     build:
       context: .
       dockerfile: Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
     env_file: .env
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app/templates:/app/app/templates:ro
+      - ./app/static:/app/app/static:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,7 +69,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # ── Redis (broker + result backend) ──
+  # ── Redis (session store + Celery broker + result backend) ──
   redis:
     image: redis:7-alpine
     ports:

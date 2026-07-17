@@ -1,0 +1,150 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="DLk0jMDZzL2udsWK46GI" name="Page-1">
+    <mxGraphModel dx="1414" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Use Case Diagram 1a — Core Query Flow" vertex="1">
+          <mxGeometry height="25" width="900" x="150" y="15" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== System boundary ==================== -->
+        <mxCell id="sysb" parent="1" style="shape=table;fillColor=none;strokeColor=#000000;fontSize=12;fontStyle=1;verticalAlign=top;align=center;spacingTop=5;whiteSpace=wrap;horizontal=0;" value="" vertex="1">
+          <mxGeometry height="740" width="780" x="300" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="sysl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=12;fontStyle=1;" value="Knowledge Assistant System" vertex="1">
+          <mxGeometry height="22" width="780" x="300" y="55" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ACTORS (all on LEFT, Owner at top) ==================== -->
+
+        <!-- Owner (top) -->
+        <mxCell id="actor_owner" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Owner" vertex="1">
+          <mxGeometry height="60" width="30" x="70" y="100" as="geometry" />
+        </mxCell>
+
+        <!-- Admin (middle) -->
+        <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Admin" vertex="1">
+          <mxGeometry height="60" width="30" x="70" y="330" as="geometry" />
+        </mxCell>
+
+        <!-- User (bottom) -->
+        <mxCell id="actor_user" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="User" vertex="1">
+          <mxGeometry height="60" width="30" x="70" y="570" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== GENERALIZATION arrows (child → parent, open triangle) ==================== -->
+
+        <!-- Admin → Owner -->
+        <mxCell id="gen_admin_owner" edge="1" parent="1" source="actor_admin" target="actor_owner" style="endArrow=block;endFill=0;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- User → Admin -->
+        <mxCell id="gen_user_admin" edge="1" parent="1" source="actor_user" target="actor_admin" style="endArrow=block;endFill=0;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== USE CASES — User level ==================== -->
+
+        <mxCell id="uc_ask" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Ask question in natural language" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="490" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_view_answer" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="View answer with inline citations" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="570" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_sse" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Receive streamed answer via SSE" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="650" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_history" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="View personal query history" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="730" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== USE CASES — Admin level ==================== -->
+
+        <mxCell id="uc_metrics" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="View system metrics dashboard" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="240" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_escalations" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Review and resolve escalation events" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="320" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_settings" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Configure system settings" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="400" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Shared use case ==================== -->
+
+        <mxCell id="uc_auth" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Authenticate via Keycloak SSO" vertex="1">
+          <mxGeometry height="55" width="200" x="700" y="100" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Extend use case ==================== -->
+
+        <mxCell id="uc_confidence" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Receive confidence warning&#xa;on low-score answer" vertex="1">
+          <mxGeometry height="60" width="200" x="700" y="570" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ASSOCIATIONS — User to use cases ==================== -->
+
+        <mxCell id="e_u1" edge="1" parent="1" source="actor_user" target="uc_ask" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u2" edge="1" parent="1" source="actor_user" target="uc_view_answer" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u3" edge="1" parent="1" source="actor_user" target="uc_sse" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_u4" edge="1" parent="1" source="actor_user" target="uc_history" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ASSOCIATIONS — Admin to use cases ==================== -->
+
+        <mxCell id="e_a1" edge="1" parent="1" source="actor_admin" target="uc_metrics" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a2" edge="1" parent="1" source="actor_admin" target="uc_escalations" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a3" edge="1" parent="1" source="actor_admin" target="uc_settings" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== INCLUDE relationships → Authenticate ==================== -->
+
+        <mxCell id="inc_ask" edge="1" parent="1" source="uc_ask" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_metrics" edge="1" parent="1" source="uc_metrics" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_escalations" edge="1" parent="1" source="uc_escalations" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_settings" edge="1" parent="1" source="uc_settings" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== EXTEND — confidence warning extends view answer ==================== -->
+
+        <mxCell id="ext_confidence" edge="1" parent="1" source="uc_confidence" target="uc_view_answer" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«extend»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Note ==================== -->
+        <mxCell id="note1" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;fontStyle=2;spacingLeft=4;spacingTop=4;" value="Generalization: Owner inherits all Admin capabilities; Admin inherits all User capabilities.&#xa;Admin = any primary role (from Role table) with is_admin = true. Not a separate role.&#xa;Owner = super-admin seeded at deployment. Owner status is not manageable by Admin.&#xa;Roles are dynamic (lookup table) — not limited to Developer / QA Engineer." vertex="1">
+          <mxGeometry height="55" width="560" x="300" y="810" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -263,6 +263,32 @@ Three-role loop per CLAUDE.md §11:
 
 ## 9. Changelog
 
+### [2025-07-14] — Concrete Services + Infrastructure Gap-Fill
+
+**Scope:** Implemented all concrete service classes, added structlog, nginx config, and test conftest.
+
+**Created:**
+- `app/services/llm.py` — `LiteLLMService(BaseLLMService)` — calls `litellm.acompletion` pointing at Ollama
+- `app/services/vector_store.py` — `QdrantVectorStore(BaseVectorStore)` — role filter enforced at Qdrant query level
+- `app/services/reranker.py` — `TEIReranker(BaseReranker)` — HTTP POST to TEI `/rerank` endpoint
+- `app/services/embedder.py` — `OllamaEmbedder(BaseEmbedder)` — calls Ollama `/api/embed` endpoint
+- `app/services/auth.py` — `KeycloakAuthService(BaseAuthService)` — JWKS validation + lazy sync to User table
+- `app/services/__init__.py` — re-exports all concrete services
+- `app/core/logging.py` — structlog config (JSON output, ISO timestamps, context vars)
+- `nginx/nginx.conf` — reverse proxy: `/api/` → backend:8000, `/` → frontend:3000, SSE buffering disabled
+- `tests/conftest.py` — `make_state()`, `make_chunk()` factories + `MockLLMService`, `MockVectorStore`, `MockReranker`, `MockEmbedder` + pytest fixtures
+
+**Modified:**
+- `app/main.py` — wired `configure_logging()` on startup
+
+**Design decisions:**
+- All mocks inherit from ABCs (not `MagicMock`) — ensures interface compliance. They record calls for assertions.
+- Nginx disables `proxy_buffering` on `/api/` — required for SSE streaming.
+- Embedder uses Ollama's `/api/embed` (not `/api/embeddings`) — correct endpoint for batch embedding.
+- Auth service does JWKS fetch once, caches in memory (no disk, no Redis).
+
+---
+
 ### [2025-07-14] — Project Skeleton
 
 **Scope:** Full directory tree, core layer, database models, infrastructure configs.

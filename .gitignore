@@ -29,8 +29,10 @@ env/
 .DS_Store
 Thumbs.db
 
-# Node
-node_modules/
+# Secrets / API keys
+*api_key*
+*.key
+*.pem
 
 # Docker
 *.log
@@ -48,8 +50,7 @@ reviews/*.md
 alembic/versions/*.py
 !alembic/versions/.gitkeep
 
-# Diagrams
-diags/
+# Diagrams backup only (diags/ is committed)
 diags_backup/
 
 # Resumes / temporary developer handoff text files

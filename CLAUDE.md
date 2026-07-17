@@ -61,7 +61,9 @@ including other owners. Owner inherits all Admin capabilities automatically.
 | is_owner = true | Assign/revoke is_admin flag on any user, assign document category access restrictions, override ingestion configuration globally, view all Admin accounts and their active status, view Admin assignment history |
 
 **Non-negotiable:**
-- Keycloak JWT authentication is required for every action without exception.
+- Keycloak authentication is required for every action without exception.
+  Auth is session-based (HTTP-only cookie), not Bearer token.
+  FastAPI manages the OIDC flow server-side via authlib.
 - Document upload requires is_admin. Primary role alone never grants upload.
 - Admin is additive — it never overrides or replaces the primary role.
 - Owner is additive — it never overrides or replaces the primary role or admin flag.
@@ -76,10 +78,10 @@ including other owners. Owner inherits all Admin capabilities automatically.
 
 | Layer | Technology | Status |
 |---|---|---|
-| Frontend | Next.js (React) | Final |
-| Reverse proxy | Nginx — sole public entry point | Final |
-| Backend API | FastAPI (Python) | Final |
-| Auth | Keycloak 24+ — JWT, OIDC/SSO | Final |
+| Frontend | HTMX + Jinja2 (server-rendered, served by FastAPI) | Final |
+| TLS proxy (prod only) | Caddy — auto-managed HTTPS, optional | Final |
+| Backend API | FastAPI (Python) — serves UI + API + SSE | Final |
+| Auth | Keycloak 24+ — OIDC Authorization Code, session cookie | Final |
 | Agent orchestration | LangGraph StateGraph | Final |
 | Model abstraction | LiteLLM — all LLM calls go through this | Final |
 | Embeddings | BGE-M3 (self-hosted via Ollama) | Final |
@@ -90,8 +92,10 @@ including other owners. Owner inherits all Admin capabilities automatically.
 | Logging | structlog (from day one) | Final |
 | Observability | Prometheus + Grafana | Post-MVP only |
 | Containerization | Docker Compose, private internal network | Final |
-| Streaming | SSE via FastAPI EventSourceResponse | Final |
+| Streaming | SSE via FastAPI EventSourceResponse + HTMX sse extension | Final |
 | Local model runtime | Ollama | Final |
+| Session management | Server-side sessions (Redis-backed), HTTP-only cookie | Final |
+| CSRF protection | Starlette CSRF middleware, token in forms | Final |
 
 ---
 
@@ -747,21 +751,33 @@ All test cases import state factories and mock fixtures from conftest.py.
 - Telegram and WhatsApp are ruled out as access channels.
 - No colors in diagrams. Black strokes, white fill, plain text only.
 - All diagrams in .drawio format only.
+- Frontend is HTMX + Jinja2 served by FastAPI. No separate frontend process.
+  No React, no Next.js, no npm/node dependency.
+- Auth is session-based (server-side session, HTTP-only cookie). No Bearer tokens in browser.
+  CSRF middleware is mandatory on all state-changing endpoints.
+- No Nginx. Use Caddy if TLS proxy is needed. Uvicorn serves directly otherwise.
 
 ---
 
 ## 13. Deployment strategy
 
-**Primary interface:** Next.js browser UI via Nginx.
+**Primary interface:** Server-rendered HTMX + Jinja2 UI served directly by FastAPI.
+Single container serves HTML, API, SSE, and static files. No separate frontend process.
 
 **Internal network deployment (preferred):**
 Deploy on intranet at knowledge.whitecape.internal.
 Workers access via browser on company network or VPN.
 Data never leaves the network.
+Uvicorn with 4 workers handles up to 500+ concurrent connections.
+No reverse proxy needed unless corporate policy requires internal TLS.
 
 **External deployment (if no intranet):**
 Private VPS behind knowledge.whitecape.com.
-HTTPS via Let's Encrypt. Access restricted to Keycloak realm users.
+Caddy reverse proxy for automatic HTTPS via Let's Encrypt (3 lines of config).
+Access restricted to Keycloak realm users.
+
+**No Nginx.** Caddy replaces it when TLS is needed. For internal-only deployment
+without TLS requirements, Uvicorn serves directly — no proxy at all.
 
 **Messaging platforms:**
 Slack bot acceptable as secondary channel post-MVP if company uses Slack heavily.

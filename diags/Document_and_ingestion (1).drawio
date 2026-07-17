@@ -1,0 +1,87 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="EmiHkPWQU0HJ5Ak-Jghm" name="Page-1">
+    <mxGraphModel dx="1414" dy="733" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Class Diagram B — Document and Ingestion Model" vertex="1">
+          <mxGeometry height="25" width="1200" x="100" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="doc_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="Document" vertex="1">
+          <mxGeometry height="28" width="340" x="80" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="doc_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- id : UUID {PK}&#xa;- source_path : string&#xa;- original_filename : string&#xa;- category : enum {technical, quality, projects, company}&#xa;- restricted : boolean = false&#xa;- doc_hash : string {unique, SHA256}&#xa;- uploaded_by : UUID {FK → User}&#xa;- last_ingested_at : timestamp&#xa;- chunk_count : integer&#xa;- ingestion_status : enum {pending, running, done, failed}" vertex="1">
+          <mxGeometry height="195" width="340" x="80" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="user_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="User  (reference)" vertex="1">
+          <mxGeometry height="28" width="220" x="140" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="user_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="- id : UUID {PK}&#xa;full definition in Diagram A&#xa;&#xa;upload requires is_admin = true" vertex="1">
+          <mxGeometry height="75" width="220" x="140" y="598" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="doc_attr" style="endArrow=none;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="user_hdr" value="uploaded by">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="250" y="310" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m1a" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="0..*" vertex="1">
+          <mxGeometry height="16" width="30" x="260" y="309" as="geometry" />
+        </mxCell>
+        <mxCell id="m1b" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="1" vertex="1">
+          <mxGeometry height="16" width="20" x="260" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="ing_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="IngestionService" vertex="1">
+          <mxGeometry height="28" width="340" x="830" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ing_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- embedding_service : EmbeddingService&#xa;- qdrant_client : QdrantClient&#xa;- tokenizer : AutoTokenizer (BGE-M3)" vertex="1">
+          <mxGeometry height="65" width="340" x="830" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ing_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ ingest(document : Document) : void  [Celery task]&#xa;+ chunk(text : string) : list&lt;ChunkMetadata&gt;&#xa;+ embed_and_store(chunks : list&lt;ChunkMetadata&gt;) : void&#xa;+ invalidate_cache(old_chunk_ids : list&lt;str&gt;) : void" vertex="1">
+          <mxGeometry height="80" width="340" x="830" y="173" as="geometry" />
+        </mxCell>
+        <mxCell id="chunk_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="«value object»&#xa;ChunkMetadata" vertex="1">
+          <mxGeometry height="40" width="280" x="860" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="chunk_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- document_id : string (UUID)&#xa;- original_filename : string&#xa;- category : string&#xa;- allowed_roles : list&lt;string&gt;&#xa;- page_number : integer&#xa;- chunk_index : integer&#xa;- doc_hash : string (SHA256)" vertex="1">
+          <mxGeometry height="135" width="280" x="860" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="ing_op" style="startArrow=diamondThin;startFill=0;endArrow=none;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" target="chunk_hdr" value="produces">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m2a" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="1" vertex="1">
+          <mxGeometry height="16" width="20" x="1000" y="255" as="geometry" />
+        </mxCell>
+        <mxCell id="m2b" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="1..*" vertex="1">
+          <mxGeometry height="16" width="30" x="1000" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="ing_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" target="doc_hdr" value="«processes»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="celery_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="Celery  (task queue)" vertex="1">
+          <mxGeometry height="28" width="200" x="370" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="celery_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="broker: Redis&#xa;result backend: Redis&#xa;async task execution" vertex="1">
+          <mxGeometry height="50" width="200" x="370" y="353" as="geometry" />
+        </mxCell>
+        <mxCell id="emb_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="EmbeddingService  (reference)" vertex="1">
+          <mxGeometry height="28" width="220" x="590" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="emb_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="BGE-M3 via Ollama&#xa;full definition in Diagram G" vertex="1">
+          <mxGeometry height="50" width="220" x="590" y="353" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="ing_op" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;exitX=0;exitY=0.7;exitDx=0;exitDy=0;" target="celery_hdr" value="«dispatched via»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="ing_attr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="emb_hdr" value="«uses»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="200" />
+              <mxPoint x="700" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

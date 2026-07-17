@@ -1,0 +1,58 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="xnOEqweb6g9C8tjiYe10" name="Page-1">
+    <mxGraphModel dx="1178" dy="611" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="560" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Class Diagram C — Audit Log and Escalation Model" vertex="1">
+          <mxGeometry height="25" width="900" x="100" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="log_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="AuditLog  («append-only»)" vertex="1">
+          <mxGeometry height="28" width="320" x="90" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="log_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- id : UUID {PK}&#xa;- user_id : UUID {FK}&#xa;- query_text : text&#xa;- answer_text : text&#xa;- confidence_score : float&#xa;- was_escalated : boolean&#xa;- chunks_used : JSON&#xa;- namespace_queried : string&#xa;- response_time_ms : integer&#xa;- created_at : timestamp {immutable}" vertex="1">
+          <mxGeometry height="190" width="320" x="90" y="158" as="geometry" />
+        </mxCell>
+        <mxCell id="esc_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="EscalationEvent" vertex="1">
+          <mxGeometry height="28" width="300" x="580" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="esc_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- id : UUID {PK}&#xa;- audit_log_id : UUID {FK}&#xa;- reason : enum {faithfulness_failure, relevance_failure}&#xa;- notified_at : timestamp&#xa;- resolved_at : timestamp&#xa;- resolved_by : UUID {FK}&#xa;- resolution_note : text" vertex="1">
+          <mxGeometry height="150" width="300" x="580" y="158" as="geometry" />
+        </mxCell>
+        <mxCell id="user_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="User  (reference)" vertex="1">
+          <mxGeometry height="28" width="220" x="940" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="user_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="- id : UUID {PK}&#xa;&#xa;full definition in&#xa;Diagram A" vertex="1">
+          <mxGeometry height="80" width="220" x="940" y="468" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="log_hdr" style="endArrow=none;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" target="esc_hdr" value="may trigger">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m1a" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="1" vertex="1">
+          <mxGeometry height="16" width="20" x="420" y="136" as="geometry" />
+        </mxCell>
+        <mxCell id="m1b" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="0..1" vertex="1">
+          <mxGeometry height="16" width="30" x="545" y="136" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="log_hdr" style="endArrow=none;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="user_hdr" value="issued by">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m2a" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="0..*" vertex="1">
+          <mxGeometry height="16" width="30" x="50" y="152" as="geometry" />
+        </mxCell>
+        <mxCell id="m2b" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="1" vertex="1">
+          <mxGeometry height="16" width="20" x="920" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="esc_hdr" style="endArrow=none;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" target="user_hdr" value="resolved by">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m3a" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="0..*" vertex="1">
+          <mxGeometry height="16" width="30" x="890" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="m3b" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="0..1" vertex="1">
+          <mxGeometry height="16" width="30" x="1050" y="410" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

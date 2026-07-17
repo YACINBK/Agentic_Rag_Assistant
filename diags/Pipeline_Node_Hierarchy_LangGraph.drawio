@@ -1,0 +1,196 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="e0cClv6I_UFcmuBWzPu8" name="Page-1">
+    <mxGraphModel dx="2175" dy="1928" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Class Diagram D — Pipeline Node Hierarchy (LangGraph)" vertex="1">
+          <mxGeometry height="25" width="1400" x="150" y="15" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== PipelineGraph ==================== -->
+        <mxCell id="graph_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="PipelineGraph" vertex="1">
+          <mxGeometry height="28" width="280" x="700" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="graph_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- nodes : list&lt;PipelineNode&gt;" vertex="1">
+          <mxGeometry height="28" width="280" x="700" y="98" as="geometry" />
+        </mxCell>
+        <mxCell id="graph_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ run(query : string, user : User) : PipelineState" vertex="1">
+          <mxGeometry height="28" width="280" x="700" y="126" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== PipelineNode (abstract) ==================== -->
+        <mxCell id="node_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=12;align=center;verticalAlign=middle;" value="«abstract»&#xa;PipelineNode" vertex="1">
+          <mxGeometry height="40" width="280" x="700" y="212" as="geometry" />
+        </mxCell>
+        <mxCell id="node_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ execute(state : PipelineState) : PipelineState" vertex="1">
+          <mxGeometry height="28" width="280" x="700" y="252" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Composition: PipelineGraph ◆→ PipelineNode ==================== -->
+        <mxCell id="ec1" edge="1" parent="1" source="graph_hdr" style="startArrow=diamondThin;startFill=1;endArrow=none;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" target="node_hdr" value="composed of">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="mc1a" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="1" vertex="1">
+          <mxGeometry height="16" width="20" x="840" y="156" as="geometry" />
+        </mxCell>
+        <mxCell id="mc1b" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="9" vertex="1">
+          <mxGeometry height="16" width="20" x="840" y="196" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== PipelineState (reference) ==================== -->
+        <mxCell id="state_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="PipelineState  (reference)" vertex="1">
+          <mxGeometry height="28" width="260" x="1220" y="-60" as="geometry" />
+        </mxCell>
+        <mxCell id="state_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="the shared data object passed&#xa;between every node&#xa;&#xa;full field list in Diagram E" vertex="1">
+          <mxGeometry height="80" width="260" x="1220" y="-32" as="geometry" />
+        </mxCell>
+
+        <!-- PipelineNode → PipelineState (uses) -->
+        <mxCell id="dstate" edge="1" parent="1" source="node_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" target="state_hdr" value="uses">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1080" y="232" />
+              <mxPoint x="1080" y="-46" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ==================== Concrete Nodes (row 1: 0–4) ==================== -->
+
+        <!-- Node 0: CacheCheckNode -->
+        <mxCell id="n1_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="CacheCheckNode" vertex="1">
+          <mxGeometry height="28" width="220" x="40" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="n1_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" value="+ execute(state) : PipelineState&#xa;threshold : 0.92" vertex="1">
+          <mxGeometry height="40" width="220" x="40" y="448" as="geometry" />
+        </mxCell>
+
+        <!-- Node 1: ClassifierNode -->
+        <mxCell id="n2_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="ClassifierNode" vertex="1">
+          <mxGeometry height="28" width="220" x="300" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="n2_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" value="+ execute(state) : PipelineState&#xa;model : CLASSIFIER_MODEL" vertex="1">
+          <mxGeometry height="40" width="220" x="300" y="448" as="geometry" />
+        </mxCell>
+
+        <!-- Node 2: RewriterDecomposerNode -->
+        <mxCell id="n3_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="RewriterDecomposerNode" vertex="1">
+          <mxGeometry height="28" width="220" x="560" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="n3_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" value="+ execute(state) : PipelineState&#xa;model : REWRITER_MODEL" vertex="1">
+          <mxGeometry height="40" width="220" x="560" y="448" as="geometry" />
+        </mxCell>
+
+        <!-- Node 3: ParallelSearchNode -->
+        <mxCell id="n4_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="ParallelSearchNode" vertex="1">
+          <mxGeometry height="28" width="220" x="820" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="n4_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" value="+ execute(state) : PipelineState&#xa;role filter (hard security boundary)" vertex="1">
+          <mxGeometry height="40" width="220" x="820" y="448" as="geometry" />
+        </mxCell>
+
+        <!-- Node 4: RerankerNode -->
+        <mxCell id="n5_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="RerankerNode" vertex="1">
+          <mxGeometry height="28" width="220" x="1080" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="n5_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" value="+ execute(state) : PipelineState&#xa;calls RerankerService (TEI)" vertex="1">
+          <mxGeometry height="40" width="220" x="1080" y="448" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Concrete Nodes (row 2: 5–7 + 5b) ==================== -->
+
+        <!-- Node 5: RelevanceGateNode -->
+        <mxCell id="n6_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="RelevanceGateNode" vertex="1">
+          <mxGeometry height="28" width="220" x="40" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="n6_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" value="+ execute(state) : PipelineState&#xa;pure Python threshold check" vertex="1">
+          <mxGeometry height="40" width="220" x="40" y="588" as="geometry" />
+        </mxCell>
+
+        <!-- Node 5b: RetryNode -->
+        <mxCell id="n6b_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="RetryNode" vertex="1">
+          <mxGeometry height="28" width="220" x="300" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="n6b_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" value="+ execute(state) : PipelineState&#xa;one broadened search attempt only" vertex="1">
+          <mxGeometry height="40" width="220" x="300" y="588" as="geometry" />
+        </mxCell>
+
+        <!-- Node 6: GeneratorNode -->
+        <mxCell id="n7_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="GeneratorNode" vertex="1">
+          <mxGeometry height="28" width="220" x="560" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="n7_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" value="+ execute(state) : PipelineState&#xa;model : GENERATOR_MODEL, buffered" vertex="1">
+          <mxGeometry height="40" width="220" x="560" y="588" as="geometry" />
+        </mxCell>
+
+        <!-- Node 7: FaithfulnessCheckerNode -->
+        <mxCell id="n8_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="FaithfulnessCheckerNode" vertex="1">
+          <mxGeometry height="28" width="220" x="820" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="n8_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=left;verticalAlign=top;spacingLeft=5;spacingTop=5;" value="+ execute(state) : PipelineState&#xa;MVP: token-overlap heuristic" vertex="1">
+          <mxGeometry height="40" width="220" x="820" y="588" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Generalization arrows (all nodes → PipelineNode) ==================== -->
+
+        <!-- Row 1 nodes → PipelineNode -->
+        <mxCell id="g1" edge="1" parent="1" source="n1_hdr" style="endArrow=block;endFill=0;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" target="node_op" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="840" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="g2" edge="1" parent="1" source="n2_hdr" style="endArrow=block;endFill=0;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" target="node_op" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="840" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="g3" edge="1" parent="1" source="n3_hdr" style="endArrow=block;endFill=0;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" target="node_op" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="840" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="g4" edge="1" parent="1" source="n4_hdr" style="endArrow=block;endFill=0;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" target="node_op" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="840" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="g5" edge="1" parent="1" source="n5_hdr" style="endArrow=block;endFill=0;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" target="node_op" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="840" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Row 2 nodes → PipelineNode -->
+        <mxCell id="g6" edge="1" parent="1" source="n6_hdr" style="endArrow=block;endFill=0;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" target="node_op" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="840" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="g6b" edge="1" parent="1" source="n6b_hdr" style="endArrow=block;endFill=0;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" target="node_op" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="840" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="g7" edge="1" parent="1" source="n7_hdr" style="endArrow=block;endFill=0;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" target="node_op" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="840" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="g8" edge="1" parent="1" source="n8_hdr" style="endArrow=block;endFill=0;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" target="node_op" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="840" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ==================== Pipeline flow note ==================== -->
+        <mxCell id="note1" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;spacingLeft=8;spacingTop=6;spacingRight=8;fontStyle=2;" value="Pipeline flow: 0 → 1 → 2 → 3 → 4 → 5 → [5b if gate fails] → 6 → 7&#xa;Cache hit at Node 0 skips 1–7. DIRECT classification at Node 1 skips 2–7.&#xa;Generator output is BUFFERED — SSE stream only begins after Node 7 (faithfulness) passes." vertex="1">
+          <mxGeometry height="50" width="620" x="1100" y="560" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

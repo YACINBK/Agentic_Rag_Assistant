@@ -1,0 +1,105 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="H_auth_middleware" name="Page-1">
+    <mxGraphModel dx="1414" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="750" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Class Diagram H — Authentication and User Session" vertex="1">
+          <mxGeometry height="25" width="1100" x="100" y="20" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== AuthMiddleware ==================== -->
+        <mxCell id="auth_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="AuthMiddleware" vertex="1">
+          <mxGeometry height="28" width="320" x="100" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="auth_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- jwt_validator : JWTValidator&#xa;- user_repo : UserRepository" vertex="1">
+          <mxGeometry height="48" width="320" x="100" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="auth_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ __call__(request : Request, call_next) : Response&#xa;  — extracts Bearer token&#xa;  — validates JWT via Keycloak&#xa;  — syncs user record (lazy sync)&#xa;  — sets request.state.user" vertex="1">
+          <mxGeometry height="100" width="320" x="100" y="166" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== JWTValidator ==================== -->
+        <mxCell id="jwt_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="JWTValidator" vertex="1">
+          <mxGeometry height="28" width="300" x="540" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="jwt_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- keycloak_url : string&#xa;- realm : string&#xa;- public_key : RSAPublicKey (cached)" vertex="1">
+          <mxGeometry height="65" width="300" x="540" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="jwt_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ validate(token : string) : TokenPayload&#xa;+ refresh_public_key() : void" vertex="1">
+          <mxGeometry height="48" width="300" x="540" y="183" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== TokenPayload (value object) ==================== -->
+        <mxCell id="tp_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="«value object»&#xa;TokenPayload" vertex="1">
+          <mxGeometry height="40" width="260" x="560" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="tp_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- sub : string (keycloak_id)&#xa;- email : string&#xa;- realm_access.roles : list&lt;string&gt;&#xa;- exp : integer (unix timestamp)&#xa;- iat : integer (unix timestamp)" vertex="1">
+          <mxGeometry height="100" width="260" x="560" y="350" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== UserRepository ==================== -->
+        <mxCell id="urepo_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="UserRepository" vertex="1">
+          <mxGeometry height="28" width="280" x="960" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="urepo_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- db_session : AsyncSession" vertex="1">
+          <mxGeometry height="30" width="280" x="960" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="urepo_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ get_or_create(keycloak_id, email, roles) : User&#xa;+ sync_role_from_token(user, token_roles) : User&#xa;+ update_last_login(user_id : UUID) : void&#xa;+ find_by_id(user_id : UUID) : User | None" vertex="1">
+          <mxGeometry height="80" width="280" x="960" y="148" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== User (reference) ==================== -->
+        <mxCell id="user_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="User  (reference)" vertex="1">
+          <mxGeometry height="28" width="240" x="980" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="user_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="full definition in Diagram A&#xa;&#xa;- id, email, keycloak_id&#xa;- role_id, is_admin, is_owner" vertex="1">
+          <mxGeometry height="75" width="240" x="980" y="338" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Keycloak (external) ==================== -->
+        <mxCell id="kc_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="Keycloak  (external service)" vertex="1">
+          <mxGeometry height="28" width="220" x="570" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="kc_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="OIDC / JWT issuer&#xa;RSA public key for validation&#xa;realm_access.roles in JWT claims" vertex="1">
+          <mxGeometry height="55" width="220" x="570" y="558" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Lazy sync note ==================== -->
+        <mxCell id="note1" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;spacingLeft=8;spacingTop=6;spacingRight=8;" value="Lazy sync on login (CLAUDE.md §2, §12):&#xa;&#xa;On every authenticated request, the AuthMiddleware reads roles&#xa;from the JWT (set by Keycloak), and UserRepository.sync_role_from_token()&#xa;updates the local PostgreSQL record if the role has changed.&#xa;No Keycloak webhook infrastructure is needed.&#xa;The local DB is never more than one JWT lifetime (15 min) behind." vertex="1">
+          <mxGeometry height="120" width="450" x="100" y="490" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== EDGES ==================== -->
+
+        <!-- AuthMiddleware → JWTValidator -->
+        <mxCell id="e1" edge="1" parent="1" source="auth_hdr" target="jwt_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- AuthMiddleware → UserRepository -->
+        <mxCell id="e2" edge="1" parent="1" source="auth_attr" target="urepo_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- JWTValidator → TokenPayload -->
+        <mxCell id="e3" edge="1" parent="1" source="jwt_op" target="tp_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" value="«produces»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- UserRepository → User -->
+        <mxCell id="e4" edge="1" parent="1" source="urepo_op" target="user_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" value="«manages»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- JWTValidator → Keycloak -->
+        <mxCell id="e5" edge="1" parent="1" source="jwt_attr" target="kc_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" value="«validates against»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

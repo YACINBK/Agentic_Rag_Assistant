@@ -1,0 +1,137 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="v2Rf6rJ7EuX3z5snqbLp" name="Page-1">
+    <mxGraphModel dx="1571" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Use Case Diagram 1c — User and Role Management" vertex="1">
+          <mxGeometry height="25" width="900" x="150" y="15" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== System boundary ==================== -->
+        <mxCell id="sysb" parent="1" style="shape=table;fillColor=none;strokeColor=#000000;fontSize=12;fontStyle=1;verticalAlign=top;align=center;spacingTop=5;whiteSpace=wrap;horizontal=0;" value="" vertex="1">
+          <mxGeometry height="720" width="780" x="300" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="sysl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=12;fontStyle=1;" value="User and Role Management Sub-system" vertex="1">
+          <mxGeometry height="22" width="780" x="300" y="55" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ACTORS (all on LEFT, Owner at top) ==================== -->
+
+        <!-- Owner (top) -->
+        <mxCell id="actor_owner" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Owner" vertex="1">
+          <mxGeometry height="60" width="30" x="70" y="120" as="geometry" />
+        </mxCell>
+
+        <!-- Admin (bottom) -->
+        <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Admin" vertex="1">
+          <mxGeometry height="60" width="30" x="70" y="420" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== GENERALIZATION arrow (Admin → Owner) ==================== -->
+
+        <mxCell id="gen_admin_owner" edge="1" parent="1" source="actor_admin" target="actor_owner" style="endArrow=block;endFill=0;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== USE CASES — Admin level ==================== -->
+
+        <mxCell id="uc_viewusers" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="View user list" vertex="1">
+          <mxGeometry height="50" width="200" x="340" y="330" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_changerole" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Change user primary role" vertex="1">
+          <mxGeometry height="55" width="200" x="340" y="410" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_auditlog" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="View full organizational audit log" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="495" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_filteraudit" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Filter audit log&#xa;by user / date / type" vertex="1">
+          <mxGeometry height="55" width="210" x="710" y="495" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== USE CASES — Owner level ==================== -->
+
+        <mxCell id="uc_assign_admin" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Assign Admin status to a user" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_revoke_admin" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Revoke Admin status from a user" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="170" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_view_admins" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="View all Admin accounts&#xa;and their active status" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="250" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_admin_history" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="View Admin assignment history" vertex="1">
+          <mxGeometry height="55" width="220" x="700" y="250" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Shared use case ==================== -->
+
+        <mxCell id="uc_auth" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Authenticate via Keycloak SSO" vertex="1">
+          <mxGeometry height="55" width="200" x="720" y="90" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ASSOCIATIONS — Owner to use cases ==================== -->
+
+        <mxCell id="e_o1" edge="1" parent="1" source="actor_owner" target="uc_assign_admin" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_o2" edge="1" parent="1" source="actor_owner" target="uc_revoke_admin" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_o3" edge="1" parent="1" source="actor_owner" target="uc_view_admins" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_o4" edge="1" parent="1" source="actor_owner" target="uc_admin_history" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ASSOCIATIONS — Admin to use cases ==================== -->
+
+        <mxCell id="e_a1" edge="1" parent="1" source="actor_admin" target="uc_viewusers" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a2" edge="1" parent="1" source="actor_admin" target="uc_changerole" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a3" edge="1" parent="1" source="actor_admin" target="uc_auditlog" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== INCLUDE relationships → Authenticate ==================== -->
+
+        <mxCell id="inc_assign_auth" edge="1" parent="1" source="uc_assign_admin" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_viewusers_auth" edge="1" parent="1" source="uc_viewusers" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_changerole_auth" edge="1" parent="1" source="uc_changerole" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_auditlog_auth" edge="1" parent="1" source="uc_auditlog" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== EXTEND — Filter extends Audit log ==================== -->
+
+        <mxCell id="ext_filter" edge="1" parent="1" source="uc_filteraudit" target="uc_auditlog" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«extend»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Note ==================== -->
+        <mxCell id="note1" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;fontStyle=2;spacingLeft=4;spacingTop=4;" value="Generalization: Owner inherits all Admin capabilities (view users, change roles, audit log, etc.).&#xa;Admin = any primary role (from Role table) with is_admin = true. Not a separate role.&#xa;Owner = super-admin seeded at deployment. Owner status is not manageable by Admin.&#xa;Admin cannot assign or revoke is_admin — only Owner can." vertex="1">
+          <mxGeometry height="55" width="560" x="300" y="800" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

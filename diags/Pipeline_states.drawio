@@ -1,0 +1,29 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="E_pipeline_state" name="Page-1">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="950" pageHeight="620" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" value="Class Diagram E — Pipeline State (shared data contract)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="75" y="15" width="800" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== PipelineState ==================== -->
+        <mxCell id="state_hdr" value="PipelineState" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="80" width="340" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="state_attr" value="- query : string&#xa;- user_id : UUID&#xa;- role : string&#xa;- rewritten_query : string&#xa;- sub_queries : list&lt;string&gt;&#xa;- retrieved_chunks : list&lt;Chunk&gt;&#xa;- reranked_chunks : list&lt;Chunk&gt;&#xa;- generated_answer : string&#xa;- citations : list&lt;Citation&gt;&#xa;- confidence_score : float&#xa;- is_faithful : boolean&#xa;- cache_hit : boolean&#xa;- classification : string" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="108" width="340" height="240" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Contract note ==================== -->
+        <mxCell id="legend" value="This single object is passed into every node in Diagram D and returned with new fields set.&#xa;Nodes read the fields they need and write new ones — no node deletes a field another node relies on.&#xa;Not every field is set on every path: sub_queries stays empty on the single-search path,&#xa;citations and confidence_score are only set after the Generator and Faithfulness nodes run.&#xa;&#xa;The authoritative, type-checked version of this contract is contracts/conftest.md,&#xa;written before any node contract so all nodes agree on the same field names and types." style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=10;spacingLeft=8;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="150" y="390" width="650" height="130" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,145 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="VRcMe-CSULi7S0q4CDoq" name="Page-1">
+    <mxGraphModel dx="1488" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Use Case Diagram 1b — Document Management" vertex="1">
+          <mxGeometry height="25" width="900" x="150" y="15" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== System boundary ==================== -->
+        <mxCell id="sysb" parent="1" style="shape=table;fillColor=none;strokeColor=#000000;fontSize=12;fontStyle=1;verticalAlign=top;align=center;spacingTop=5;whiteSpace=wrap;horizontal=0;" value="" vertex="1">
+          <mxGeometry height="720" width="780" x="300" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="sysl" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=12;fontStyle=1;" value="Document Management Sub-system" vertex="1">
+          <mxGeometry height="22" width="780" x="300" y="55" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ACTORS (all on LEFT, Owner at top) ==================== -->
+
+        <!-- Owner (top) -->
+        <mxCell id="actor_owner" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Owner" vertex="1">
+          <mxGeometry height="60" width="30" x="70" y="120" as="geometry" />
+        </mxCell>
+
+        <!-- Admin (bottom) -->
+        <mxCell id="actor_admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Admin" vertex="1">
+          <mxGeometry height="60" width="30" x="70" y="400" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== GENERALIZATION arrow (Admin → Owner) ==================== -->
+
+        <mxCell id="gen_admin_owner" edge="1" parent="1" source="actor_admin" target="actor_owner" style="endArrow=block;endFill=0;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== USE CASES — Admin level (requires is_admin) ==================== -->
+
+        <mxCell id="uc_upload" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Upload document to category" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="280" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_restricted" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Set document restricted flag" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="360" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_viewdocs" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="View document list and ingestion status" vertex="1">
+          <mxGeometry height="55" width="230" x="340" y="440" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_delete" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Delete a document" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="520" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_reingest" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Trigger manual re-ingestion" vertex="1">
+          <mxGeometry height="55" width="220" x="340" y="600" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== USE CASES — Owner level ==================== -->
+
+        <mxCell id="uc_category" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Assign document category&#xa;access restrictions" vertex="1">
+          <mxGeometry height="60" width="220" x="340" y="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_override" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Override ingestion&#xa;configuration globally" vertex="1">
+          <mxGeometry height="60" width="220" x="340" y="185" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Shared use cases ==================== -->
+
+        <mxCell id="uc_auth" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Authenticate via Keycloak SSO" vertex="1">
+          <mxGeometry height="55" width="200" x="720" y="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_monitor" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;" value="Monitor ingestion job status" vertex="1">
+          <mxGeometry height="55" width="210" x="710" y="520" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ASSOCIATIONS — Owner to use cases ==================== -->
+
+        <mxCell id="e_o1" edge="1" parent="1" source="actor_owner" target="uc_category" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_o2" edge="1" parent="1" source="actor_owner" target="uc_override" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ASSOCIATIONS — Admin to use cases ==================== -->
+
+        <mxCell id="e_a1" edge="1" parent="1" source="actor_admin" target="uc_upload" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a2" edge="1" parent="1" source="actor_admin" target="uc_restricted" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a3" edge="1" parent="1" source="actor_admin" target="uc_viewdocs" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a4" edge="1" parent="1" source="actor_admin" target="uc_delete" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a5" edge="1" parent="1" source="actor_admin" target="uc_reingest" style="endArrow=none;strokeColor=#000000;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== INCLUDE relationships ==================== -->
+
+        <!-- Upload includes Set restricted flag -->
+        <mxCell id="inc_restricted" edge="1" parent="1" source="uc_upload" target="uc_restricted" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;edgeStyle=orthogonalEdgeStyle;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Re-ingestion includes Monitor ingestion -->
+        <mxCell id="inc_monitor" edge="1" parent="1" source="uc_reingest" target="uc_monitor" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Include → Authenticate -->
+        <mxCell id="inc_upload_auth" edge="1" parent="1" source="uc_upload" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_category_auth" edge="1" parent="1" source="uc_category" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_override_auth" edge="1" parent="1" source="uc_override" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_delete_auth" edge="1" parent="1" source="uc_delete" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_reingest_auth" edge="1" parent="1" source="uc_reingest" target="uc_auth" style="dashed=1;endArrow=open;endFill=0;strokeColor=#000000;fontSize=9;" value="«include»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Note ==================== -->
+        <mxCell id="note1" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;fontStyle=2;spacingLeft=4;spacingTop=4;" value="Generalization: Owner inherits all Admin capabilities (upload, delete, re-ingest, etc.).&#xa;Admin = any primary role (from Role table) with is_admin = true. Not a separate role.&#xa;Owner = super-admin seeded at deployment. Owner status is not manageable by Admin.&#xa;Document upload requires is_admin flag. Primary role alone never grants upload." vertex="1">
+          <mxGeometry height="55" width="560" x="300" y="800" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

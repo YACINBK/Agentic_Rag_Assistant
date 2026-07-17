@@ -1,0 +1,434 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="seq1a_simple_rag" name="Page-1">
+    <mxGraphModel dx="2500" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2500" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Sequence Diagram 1a — SIMPLE_RAG Query (Main Flow)" vertex="1">
+          <mxGeometry height="30" width="2300" x="120" y="10" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== LIFELINE HEADERS (evenly spaced, pitch = 175) ==================== -->
+
+        <!-- User @160 -->
+        <mxCell id="lh_user" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="User" vertex="1">
+          <mxGeometry height="60" width="30" x="145" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_user" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="120" as="sourcePoint" />
+            <mxPoint x="160" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- FastAPI @335 -->
+        <mxCell id="lh_fastapi" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;" value="FastAPI" vertex="1">
+          <mxGeometry height="35" width="120" x="275" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_fastapi" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="120" as="sourcePoint" />
+            <mxPoint x="335" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Keycloak @510 -->
+        <mxCell id="lh_keycloak" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;" value="Keycloak" vertex="1">
+          <mxGeometry height="35" width="120" x="450" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_keycloak" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="120" as="sourcePoint" />
+            <mxPoint x="510" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 0 CacheCheck @685 -->
+        <mxCell id="lh_cache" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="Node 0&#xa;CacheCheck" vertex="1">
+          <mxGeometry height="35" width="120" x="625" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_cache" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="685" y="120" as="sourcePoint" />
+            <mxPoint x="685" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 1 Classifier @860 -->
+        <mxCell id="lh_class" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="Node 1&#xa;Classifier" vertex="1">
+          <mxGeometry height="35" width="120" x="800" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_class" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="120" as="sourcePoint" />
+            <mxPoint x="860" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 2 Rewriter @1035 -->
+        <mxCell id="lh_rewrite" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="Node 2&#xa;Rewriter" vertex="1">
+          <mxGeometry height="35" width="120" x="975" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_rewrite" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035" y="120" as="sourcePoint" />
+            <mxPoint x="1035" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Qdrant @1210 -->
+        <mxCell id="lh_qdrant" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="Qdrant" vertex="1">
+          <mxGeometry height="35" width="120" x="1150" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_qdrant" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1210" y="120" as="sourcePoint" />
+            <mxPoint x="1210" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 4 Reranker (TEI) @1385 -->
+        <mxCell id="lh_rerank" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="Node 4&#xa;Reranker (TEI)" vertex="1">
+          <mxGeometry height="35" width="120" x="1325" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_rerank" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1385" y="120" as="sourcePoint" />
+            <mxPoint x="1385" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 5 RelevanceGate @1560 -->
+        <mxCell id="lh_gate" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="Node 5&#xa;RelevanceGate" vertex="1">
+          <mxGeometry height="35" width="120" x="1500" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_gate" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1560" y="120" as="sourcePoint" />
+            <mxPoint x="1560" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 6 Generator @1735 -->
+        <mxCell id="lh_gen" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="Node 6&#xa;Generator" vertex="1">
+          <mxGeometry height="35" width="120" x="1675" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_gen" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1735" y="120" as="sourcePoint" />
+            <mxPoint x="1735" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 7 Faithfulness @1910 -->
+        <mxCell id="lh_faith" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="Node 7&#xa;Faithfulness" vertex="1">
+          <mxGeometry height="35" width="120" x="1850" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_faith" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1910" y="120" as="sourcePoint" />
+            <mxPoint x="1910" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- PostgreSQL @2085 -->
+        <mxCell id="lh_pg" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="PostgreSQL" vertex="1">
+          <mxGeometry height="35" width="120" x="2025" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_pg" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2085" y="120" as="sourcePoint" />
+            <mxPoint x="2085" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Ollama (LiteLLM) @2260 -->
+        <mxCell id="lh_ollama" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=10;align=center;" value="Ollama&#xa;(LiteLLM)" vertex="1">
+          <mxGeometry height="35" width="120" x="2200" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_ollama" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=8 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2260" y="120" as="sourcePoint" />
+            <mxPoint x="2260" y="1500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ==================== REQUEST + AUTH ==================== -->
+
+        <mxCell id="m01" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="POST /api/query (cookie session)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="150" as="sourcePoint" />
+            <mxPoint x="335" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m04" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="validate session (lazy JWKS check)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="185" as="sourcePoint" />
+            <mxPoint x="510" y="185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m05" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="claims (role, keycloak_id)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="220" as="sourcePoint" />
+            <mxPoint x="335" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Cache check (always runs first) -->
+        <mxCell id="m06" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="check semantic_cache" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="325" as="sourcePoint" />
+            <mxPoint x="685" y="325" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m07" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="vector search (role filter, 0.92)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="685" y="360" as="sourcePoint" />
+            <mxPoint x="1210" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m08" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="cache lookup result" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1210" y="390" as="sourcePoint" />
+            <mxPoint x="685" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ==================== ALT FRAGMENT: cache hit / cache miss ==================== -->
+
+        <mxCell id="alt_frame" parent="1" style="shape=mxgraph.uml.frame;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=11;fontStyle=1;width=50;height=24;" value="alt" vertex="1">
+          <mxGeometry height="1040" width="2060" x="270" y="410" as="geometry" />
+        </mxCell>
+
+        <!-- guard: cache hit -->
+        <mxCell id="alt_g1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=2;align=left;" value="[cache hit — score &gt;= 0.92 and role match]" vertex="1">
+          <mxGeometry height="20" width="360" x="340" y="416" as="geometry" />
+        </mxCell>
+
+        <mxCell id="h01" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="cache HIT — answer_text" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="685" y="450" as="sourcePoint" />
+            <mxPoint x="335" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h02" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="INSERT AuditLog (cache_hit = true)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="485" as="sourcePoint" />
+            <mxPoint x="2085" y="485" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h03" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="SSE cached answer" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="520" as="sourcePoint" />
+            <mxPoint x="160" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h_note" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;fontStyle=2;spacingLeft=4;spacingTop=2;" value="Pipeline skipped (Nodes 1–7). ~50ms. Full cache-hit detail in Seq 1b." vertex="1">
+          <mxGeometry height="24" width="380" x="340" y="530" as="geometry" />
+        </mxCell>
+
+        <!-- alt divider -->
+        <mxCell id="alt_div" parent="1" style="html=1;points=[];strokeColor=#000000;strokeWidth=1;dashed=1;dashPattern=12 4;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="270" y="566" as="sourcePoint" />
+            <mxPoint x="2330" y="566" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- guard: cache miss -->
+        <mxCell id="alt_g2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontStyle=2;align=left;" value="[cache miss — run full SIMPLE_RAG pipeline]" vertex="1">
+          <mxGeometry height="20" width="360" x="340" y="570" as="geometry" />
+        </mxCell>
+
+        <!-- Node 1 Classifier -->
+        <mxCell id="p01" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="classify(query)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="605" as="sourcePoint" />
+            <mxPoint x="860" y="605" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p02" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="LiteLLM → qwen2.5:7b" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="640" as="sourcePoint" />
+            <mxPoint x="2260" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p03" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="SIMPLE_RAG" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2260" y="675" as="sourcePoint" />
+            <mxPoint x="860" y="675" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p04" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="classification = SIMPLE_RAG" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="710" as="sourcePoint" />
+            <mxPoint x="335" y="710" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 2 Rewriter -->
+        <mxCell id="p05" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="rewrite(query)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="745" as="sourcePoint" />
+            <mxPoint x="1035" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p06" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="LiteLLM → qwen2.5:14b" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035" y="780" as="sourcePoint" />
+            <mxPoint x="2260" y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p07" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="rewritten query" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2260" y="815" as="sourcePoint" />
+            <mxPoint x="1035" y="815" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p08" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="rewritten_query" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035" y="850" as="sourcePoint" />
+            <mxPoint x="335" y="850" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 3 Qdrant search -->
+        <mxCell id="p09" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="search(rewritten_query, role_filter)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="885" as="sourcePoint" />
+            <mxPoint x="1210" y="885" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_sec" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;fontStyle=2;spacingLeft=4;spacingTop=2;" value="HARD SECURITY BOUNDARY&#xa;FieldCondition: allowed_roles ∈ [user_role, &quot;all&quot;]" vertex="1">
+          <mxGeometry height="30" width="300" x="770" y="862" as="geometry" />
+        </mxCell>
+        <mxCell id="p10" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="retrieved chunks" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1210" y="920" as="sourcePoint" />
+            <mxPoint x="335" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 4 Reranker -->
+        <mxCell id="p11" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="POST /rerank (query, passages)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="955" as="sourcePoint" />
+            <mxPoint x="1385" y="955" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p12" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="scored + pruned chunks" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1385" y="990" as="sourcePoint" />
+            <mxPoint x="335" y="990" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 5 Relevance Gate -->
+        <mxCell id="p13" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="threshold check" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="1025" as="sourcePoint" />
+            <mxPoint x="1560" y="1025" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p14" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="PASS" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1560" y="1060" as="sourcePoint" />
+            <mxPoint x="335" y="1060" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ref: relevance failure -->
+        <mxCell id="ref1" parent="1" style="shape=mxgraph.uml.frame;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=10;fontStyle=1;width=50;height=22;align=center;verticalAlign=middle;spacingTop=2;" value="ref" vertex="1">
+          <mxGeometry height="40" width="1290" x="330" y="1075" as="geometry" />
+        </mxCell>
+        <mxCell id="ref1_txt" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;fontStyle=2;align=center;" value="on relevance gate FAIL → single retry, then honest fallback  (see Seq 1c)" vertex="1">
+          <mxGeometry height="20" width="1180" x="350" y="1085" as="geometry" />
+        </mxCell>
+
+        <!-- Node 6 Generator -->
+        <mxCell id="p15" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="generate(chunks, query, role_persona)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="1150" as="sourcePoint" />
+            <mxPoint x="1735" y="1150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p16" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="LiteLLM → qwen2.5:32b" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1735" y="1185" as="sourcePoint" />
+            <mxPoint x="2260" y="1185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_buf" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;fontStyle=2;spacingLeft=4;spacingTop=2;" value="BUFFERED — answer held in&#xa;memory, NOT streamed yet" vertex="1">
+          <mxGeometry height="30" width="200" x="1760" y="1192" as="geometry" />
+        </mxCell>
+        <mxCell id="p17" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="complete buffered answer + citations" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2260" y="1230" as="sourcePoint" />
+            <mxPoint x="1735" y="1230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p18" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="buffered answer" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1735" y="1265" as="sourcePoint" />
+            <mxPoint x="335" y="1265" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Node 7 Faithfulness -->
+        <mxCell id="p19" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="token_overlap_check(answer, chunks)" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="1300" as="sourcePoint" />
+            <mxPoint x="1910" y="1300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p20" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="FAITHFUL" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1910" y="1335" as="sourcePoint" />
+            <mxPoint x="335" y="1335" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ref: faithfulness failure -->
+        <mxCell id="ref2" parent="1" style="shape=mxgraph.uml.frame;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=10;fontStyle=1;width=50;height=22;align=center;verticalAlign=middle;spacingTop=2;" value="ref" vertex="1">
+          <mxGeometry height="40" width="1640" x="330" y="1350" as="geometry" />
+        </mxCell>
+        <mxCell id="ref2_txt" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;fontStyle=2;align=center;" value="on NOT FAITHFUL → discard buffered answer + write EscalationEvent  (see Seq 1c)" vertex="1">
+          <mxGeometry height="20" width="1520" x="350" y="1360" as="geometry" />
+        </mxCell>
+
+        <!-- Persist + cache + stream -->
+        <mxCell id="p21" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="INSERT AuditLog" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="1410" as="sourcePoint" />
+            <mxPoint x="2085" y="1410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p22" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;strokeColor=#000000;fontSize=10;" value="store new entry in semantic_cache" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="1440" as="sourcePoint" />
+            <mxPoint x="1210" y="1440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ==================== SSE STREAM OUT (after fragment) ==================== -->
+        <mxCell id="s01" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;strokeColor=#000000;fontSize=10;" value="SSE stream buffered answer" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="335" y="1475" as="sourcePoint" />
+            <mxPoint x="160" y="1475" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="s_note" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;fontStyle=2;spacingLeft=4;spacingTop=2;" value="SSE stream begins ONLY after faithfulness PASS" vertex="1">
+          <mxGeometry height="22" width="330" x="200" y="1450" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== LATENCY NOTE ==================== -->
+        <mxCell id="note_latency" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;fontStyle=2;spacingLeft=4;spacingTop=4;" value="Total latency before SSE stream starts (cache miss path): ~2.3–4.3s&#xa;cache ~50ms + classifier ~200ms + rewriter ~400ms + search ~100ms + reranker ~150ms + generator ~1-3s BUFFERED + faithfulness ~400ms&#xa;Cache hit path: ~50ms. Every LLM call goes through LiteLLM to local Ollama — no external API." vertex="1">
+          <mxGeometry height="60" width="900" x="160" y="1520" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

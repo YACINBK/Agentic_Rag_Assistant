@@ -1,0 +1,53 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="HGfnjl7L2SeIMo6G4Q6F" name="Page-1">
+    <mxGraphModel dx="1414" dy="733" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Class Diagram A — Identity and Access Model" vertex="1">
+          <mxGeometry height="25" width="900" x="100" y="15" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Role ==================== -->
+        <mxCell id="role_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="Role" vertex="1">
+          <mxGeometry height="28" width="260" x="80" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="role_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- id : UUID {PK}&#xa;- name : string {unique}&#xa;- description : text&#xa;- persona_prompt : text&#xa;- created_at : timestamp" vertex="1">
+          <mxGeometry height="100" width="260" x="80" y="108" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== User ==================== -->
+        <mxCell id="user_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="User" vertex="1">
+          <mxGeometry height="28" width="300" x="500" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="user_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- id : UUID {PK}&#xa;- email : string {unique}&#xa;- keycloak_id : string {unique}&#xa;- role_id : UUID {FK → Role}&#xa;- is_admin : boolean = false&#xa;- is_owner : boolean = false&#xa;- created_at : timestamp&#xa;- last_login : timestamp" vertex="1">
+          <mxGeometry height="155" width="300" x="500" y="108" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Association ==================== -->
+        <mxCell id="e1" edge="1" parent="1" source="role_hdr" style="endArrow=none;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" target="user_hdr" value="has">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m1a" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="1" vertex="1">
+          <mxGeometry height="16" width="20" x="350" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="m1b" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="0..*" vertex="1">
+          <mxGeometry height="16" width="30" x="460" y="86" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Constraints note ==================== -->
+        <mxCell id="note1" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;spacingLeft=8;spacingTop=6;spacingRight=8;" value="Constraints (CLAUDE.md §10, §12):&#xa;&#xa;• UNIQUE INDEX idx_single_owner ON &quot;user&quot; (is_owner) WHERE is_owner = true&#xa;  — enforces at most one Owner at the database level&#xa;&#xa;• is_admin is additive — it never overrides or replaces the primary role&#xa;• is_owner is additive — inherits all Admin capabilities automatically&#xa;• Owner is seeded at deployment, not assignable through the UI&#xa;• Admin assignment (is_admin) requires is_owner — Admin cannot self-promote&#xa;&#xa;• Roles are dynamic (lookup table) — adding a role is an INSERT + Keycloak config&#xa;• No code may hardcode role names — filter by user's role string&#xa;• Role personas are stored in persona_prompt, not in code" vertex="1">
+          <mxGeometry height="200" width="500" x="300" y="320" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Seed values note ==================== -->
+        <mxCell id="note2" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;spacingLeft=8;spacingTop=6;spacingRight=8;fontStyle=2;" value="Seed roles: developer, qa_engineer&#xa;New roles: INSERT into Role + Keycloak realm config — no migration needed" vertex="1">
+          <mxGeometry height="35" width="400" x="80" y="240" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

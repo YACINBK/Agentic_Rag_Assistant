@@ -1,0 +1,147 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="G_cache_rate" name="Page-1">
+    <mxGraphModel dx="1414" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="950" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1;" value="Class Diagram G — Semantic Cache, Rate Limiting, and Services" vertex="1">
+          <mxGeometry height="25" width="1200" x="100" y="20" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== SemanticCacheService ==================== -->
+        <mxCell id="cache_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="SemanticCacheService" vertex="1">
+          <mxGeometry height="28" width="340" x="80" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="cache_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- qdrant_client : QdrantClient&#xa;- collection_name : string = &quot;semantic_cache&quot;&#xa;- similarity_threshold : float = 0.92&#xa;- default_ttl_hours : integer = 24" vertex="1">
+          <mxGeometry height="80" width="340" x="80" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="cache_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ lookup(query_embedding : vector, role : string) : CacheEntry | None&#xa;+ store(entry : CacheEntry) : void&#xa;+ invalidate_by_chunk_ids(chunk_ids : list&lt;str&gt;) : integer&#xa;+ purge_expired() : integer" vertex="1">
+          <mxGeometry height="80" width="340" x="80" y="198" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== CacheEntry (value object) ==================== -->
+        <mxCell id="centry_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="«value object»&#xa;CacheEntry" vertex="1">
+          <mxGeometry height="40" width="280" x="110" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="centry_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- query_text : string&#xa;- query_embedding : vector&#xa;- answer_text : string&#xa;- chunk_ids : list&lt;string&gt;&#xa;- role : string&#xa;- created_at : float (unix timestamp)&#xa;- ttl_hours : integer = 24" vertex="1">
+          <mxGeometry height="135" width="280" x="110" y="410" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== RateLimiter ==================== -->
+        <mxCell id="rl_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="RateLimiter" vertex="1">
+          <mxGeometry height="28" width="300" x="550" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="rl_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- redis_client : Redis&#xa;- max_tokens : integer = 30&#xa;- refill_rate : float (tokens per second)&#xa;- burst_capacity : integer = 5" vertex="1">
+          <mxGeometry height="80" width="300" x="550" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="rl_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ check(user_id : UUID) : boolean&#xa;+ consume(user_id : UUID) : boolean&#xa;+ remaining(user_id : UUID) : integer" vertex="1">
+          <mxGeometry height="60" width="300" x="550" y="198" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== TokenBucket (internal) ==================== -->
+        <mxCell id="tb_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=11;align=center;verticalAlign=middle;" value="«internal»&#xa;TokenBucket" vertex="1">
+          <mxGeometry height="40" width="240" x="580" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="tb_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- tokens : float&#xa;- last_refill : float (unix timestamp)&#xa;- key_prefix : string = &quot;rate_limit:&quot;" vertex="1">
+          <mxGeometry height="65" width="240" x="580" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="tb_note" parent="1" style="text;html=1;strokeColor=#000000;fillColor=#ffffff;align=left;fontSize=9;spacingLeft=8;spacingTop=6;spacingRight=8;" value="Stored as Redis key per user.&#xa;EVALSHA (Lua script) ensures atomic&#xa;check-and-decrement in a single round trip." vertex="1">
+          <mxGeometry height="55" width="240" x="580" y="475" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== EmbeddingService ==================== -->
+        <mxCell id="emb_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="EmbeddingService" vertex="1">
+          <mxGeometry height="28" width="280" x="960" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="emb_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- model : string = &quot;BAAI/bge-m3&quot;&#xa;- ollama_base_url : string" vertex="1">
+          <mxGeometry height="48" width="280" x="960" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="emb_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ embed(text : string) : vector&#xa;+ embed_batch(texts : list&lt;string&gt;) : list&lt;vector&gt;" vertex="1">
+          <mxGeometry height="48" width="280" x="960" y="166" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== RerankerService ==================== -->
+        <mxCell id="rerank_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1;fontSize=12;align=center;verticalAlign=middle;" value="RerankerService" vertex="1">
+          <mxGeometry height="28" width="280" x="960" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="rerank_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="- tei_base_url : string = &quot;http://reranker:8082&quot;&#xa;- model : string = &quot;BAAI/bge-reranker-v2-m3&quot;" vertex="1">
+          <mxGeometry height="48" width="280" x="960" y="318" as="geometry" />
+        </mxCell>
+        <mxCell id="rerank_op" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;" value="+ rerank(query : string, passages : list&lt;str&gt;) : list&lt;float&gt;" vertex="1">
+          <mxGeometry height="30" width="280" x="960" y="366" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== TEI (external) ==================== -->
+        <mxCell id="tei_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="Hugging Face TEI  (external service)" vertex="1">
+          <mxGeometry height="28" width="260" x="970" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="tei_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="Docker container, CPU mode&#xa;cross-encoder scoring via POST /rerank&#xa;Ollama cannot run cross-encoders" vertex="1">
+          <mxGeometry height="55" width="260" x="970" y="488" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== QdrantClient (external) ==================== -->
+        <mxCell id="qdr_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="QdrantClient  (external library)" vertex="1">
+          <mxGeometry height="28" width="240" x="80" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="qdr_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="qdrant-client Python SDK&#xa;manages both &quot;documents&quot; and&#xa;&quot;semantic_cache&quot; collections" vertex="1">
+          <mxGeometry height="55" width="240" x="80" y="648" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== Redis (external) ==================== -->
+        <mxCell id="redis_hdr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=3;fontSize=11;align=center;verticalAlign=middle;" value="Redis  (external service)" vertex="1">
+          <mxGeometry height="28" width="240" x="400" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="redis_attr" parent="1" style="rectangle;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;align=center;verticalAlign=top;spacingTop=6;fontStyle=2;" value="broker for Celery tasks&#xa;+ rate limiter state storage&#xa;atomic ops via Lua scripting" vertex="1">
+          <mxGeometry height="55" width="240" x="400" y="648" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== EDGES ==================== -->
+
+        <!-- SemanticCacheService ◇→ CacheEntry (manages) -->
+        <mxCell id="e1" edge="1" parent="1" source="cache_op" target="centry_hdr" style="startArrow=diamondThin;startFill=0;endArrow=none;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" value="manages">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m1a" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="1" vertex="1">
+          <mxGeometry height="16" width="20" x="230" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="m1b" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="0..*" vertex="1">
+          <mxGeometry height="16" width="30" x="230" y="356" as="geometry" />
+        </mxCell>
+
+        <!-- RateLimiter ◆→ TokenBucket (per user) -->
+        <mxCell id="e2" edge="1" parent="1" source="rl_op" target="tb_hdr" style="startArrow=diamondThin;startFill=1;endArrow=none;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" value="per user">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m2a" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="1" vertex="1">
+          <mxGeometry height="16" width="20" x="690" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="m2b" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;" value="0..*" vertex="1">
+          <mxGeometry height="16" width="30" x="690" y="356" as="geometry" />
+        </mxCell>
+
+        <!-- SemanticCacheService → QdrantClient (uses) -->
+        <mxCell id="e3" edge="1" parent="1" source="cache_attr" target="qdr_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- SemanticCacheService → EmbeddingService (uses) -->
+        <mxCell id="e4" edge="1" parent="1" source="cache_hdr" target="emb_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" value="«uses»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- RateLimiter → Redis (stored in) -->
+        <mxCell id="e5" edge="1" parent="1" source="rl_attr" target="redis_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" value="«stored in»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- RerankerService → TEI (calls) -->
+        <mxCell id="e6" edge="1" parent="1" source="rerank_op" target="tei_hdr" style="endArrow=open;endFill=0;dashed=1;html=1;strokeColor=#000000;edgeStyle=orthogonalEdgeStyle;fontSize=9;" value="«calls POST /rerank»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
