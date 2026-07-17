@@ -23,7 +23,7 @@ class FaithfulnessError(PipelineError):
 
 
 class AuthenticationError(Exception):
-    """JWT validation or Keycloak authentication failed."""
+    """OIDC flow or session validation failed."""
 
 
 class AuthorizationError(Exception):

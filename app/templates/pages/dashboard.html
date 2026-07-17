@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Whitecape Knowledge Assistant{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>Welcome, {{ user.email }}</h1>
+    <p>Role: {{ user.role }}{% if user.is_admin %} (Admin){% endif %}{% if user.is_owner %} (Owner){% endif %}</p>
+    <a href="/search" class="btn btn-primary">Search Knowledge Base</a>
+</div>
+{% endblock %}

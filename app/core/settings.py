@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     KEYCLOAK_CLIENT_ID: str = "whitecape-app"
     KEYCLOAK_CLIENT_SECRET: str = ""
 
+    # --- Session ---
+    SECRET_KEY: str = "change-me-in-production"
+    SESSION_TTL_SECONDS: int = 86400  # 24h
+
     # --- LLM models (all via LiteLLM → Ollama) ---
     CLASSIFIER_MODEL: str = "ollama/qwen2.5:7b"
     REWRITER_MODEL: str = "ollama/qwen2.5:14b"
