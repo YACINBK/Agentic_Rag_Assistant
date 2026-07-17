@@ -13,6 +13,8 @@ Section 9 is the semantic cache design — Qdrant-based, role-scoped, with inval
 Section 10 is the database schema — do not deviate from it.
 Section 11 is the loop engineering setup — how code gets written and verified.
 Section 12 is the hard constraint list — read before touching any code.
+Section 17 is the frontend conventions — component-based HTMX architecture.
+Section 18 is the git branching strategy — branch model, naming, workflow.
 
 ---
 
@@ -838,3 +840,213 @@ All decisions closed.
 | 1 | Default classifier for MVP | ollama/qwen2.5:7b local. All models local, no external API. |
 | 2 | Faithfulness checker MVP | Token overlap heuristic. No LLM call, no model needed. |
 | 3 | Semantic cache key structure | Qdrant `semantic_cache` collection, BGE-M3 embedding, 0.92 cosine threshold, role-scoped. See §9. |
+
+---
+
+## 17. Frontend conventions — component-based HTMX architecture
+
+The frontend follows a **component-based structure** analogous to React's design.
+HTMX + Jinja2 replaces React, but the same principles apply: reusable components,
+parameterized props, layout composition, and targeted re-renders.
+
+### Directory structure
+
+```
+app/templates/
+├── base.html                  # Root layout — nav, sidebar, {% block content %}, footer
+├── pages/                     # Full page renders (one per route, extends base.html)
+│   ├── dashboard.html
+│   ├── login.html
+│   ├── search.html
+│   └── admin/
+│       ├── documents.html
+│       └── users.html
+├── partials/                  # HTMX swap targets — returned alone on hx-* requests
+│   ├── search_results.html
+│   ├── chat_response.html
+│   ├── document_list.html
+│   └── upload_status.html
+├── components/                # Reusable {% include %} fragments (stateless)
+│   ├── message_bubble.html
+│   ├── document_card.html
+│   ├── search_bar.html
+│   ├── pagination.html
+│   └── alert.html
+└── macros/                    # Parameterized Jinja2 macros (like React utility components)
+    ├── forms.html             # form_field(name, type, label, error)
+    ├── buttons.html           # btn(text, variant, hx_attrs)
+    └── icons.html             # icon(name, size)
+```
+
+### Concept mapping
+
+| React concept | HTMX + Jinja2 equivalent |
+|---|---|
+| Component file (`Button.tsx`) | Jinja2 macro or `{% include "components/..." %}` |
+| Props | Macro parameters or template context variables |
+| Page / Route component | Template in `pages/` extending `base.html` |
+| `useState` + re-render | HTMX `hx-get`/`hx-post` → server returns partial → swaps target div |
+| Layout / App shell | `base.html` with `{% block content %}` |
+| Lazy loading | `hx-trigger="revealed"` |
+| SPA-like navigation | `hx-boost="true"` on `<body>` or nav links |
+| Loading state | `hx-indicator` pointing to a spinner element |
+
+### Rules (non-negotiable)
+
+1. **Pages never contain reusable markup.** They compose from components and macros.
+   If markup appears in two pages, extract it to `components/` or `macros/`.
+
+2. **Partials are the only thing HTMX swap targets return.** A route handler
+   serving an `hx-*` request returns a partial template, never a full page.
+
+3. **Components are stateless.** Data comes from template context (set by the
+   route handler), never from global state or Jinja2 globals.
+
+4. **One partial per swap target.** If a page has 3 independently updating
+   regions, that's 3 partials and 3 route handlers.
+
+5. **Full-page vs partial detection pattern** — every route that serves both
+   full-page loads and HTMX partial swaps uses this:
+
+```python
+@router.post("/search")
+async def search(request: Request, query: str = Form(...)):
+    results = await run_pipeline(query, user=request.state.user)
+
+    # HTMX request → return only the partial
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse("partials/search_results.html", {
+            "request": request, "results": results
+        })
+
+    # Full page load (bookmark, refresh) → return complete page
+    return templates.TemplateResponse("pages/search.html", {
+        "request": request, "results": results
+    })
+```
+
+6. **Macros are the Jinja2 equivalent of React prop-based components:**
+
+```html
+{# macros/forms.html #}
+{% macro form_field(name, label, type="text", error=None, required=False) %}
+<div class="form-group {{ 'has-error' if error }}">
+    <label for="{{ name }}">{{ label }}</label>
+    <input type="{{ type }}" id="{{ name }}" name="{{ name }}"
+           {{ 'required' if required }} class="form-input">
+    {% if error %}<span class="error-text">{{ error }}</span>{% endif %}
+</div>
+{% endmacro %}
+```
+
+7. **No inline JavaScript.** All interactivity goes through HTMX attributes
+   or Alpine.js (x-data) for client-side state that doesn't need a server round-trip
+   (modals, dropdowns, toggles). If Alpine is used, it lives in `app/static/js/`.
+
+8. **CSS follows the same component structure.** One CSS file per logical group,
+   not one mega-stylesheet. Use `app/static/css/` with files like `base.css`,
+   `components.css`, `pages/search.css`. No CSS frameworks unless explicitly approved.
+
+---
+
+## 18. Git branching strategy
+
+### Branch model
+
+```
+main ──────────────────────────── stable, deployable, supervisor-facing
+  │
+  └── develop ─────────────────── integration branch, all features merge here
+        │
+        └── feature/<slug> ────── one branch per contract/node/feature
+```
+
+### Naming convention
+
+| Branch type | Pattern | Example |
+|---|---|---|
+| Integration | `develop` | `develop` |
+| Pipeline node | `feature/node-NN-name` | `feature/node-01-classifier` |
+| Infrastructure | `feature/infra-description` | `feature/infra-keycloak-session` |
+| Frontend | `feature/frontend-scope` | `feature/frontend-search-page` |
+| Auth | `feature/auth-description` | `feature/auth-keycloak` |
+| Bugfix | `fix/short-description` | `fix/cache-ttl-calculation` |
+
+### Rules (non-negotiable)
+
+1. **Never push directly to `main`** after the skeleton phase (current state).
+   All work goes through `develop` via feature branches.
+
+2. **Feature branches come off `develop`, merge back to `develop`.**
+   Never branch from `main` for feature work.
+
+3. **One feature branch per contract/node.** Maps 1:1 to the loop engineering cycle.
+   A branch is created when the contract is written, merged when VERIFIED.
+
+4. **Squash-merge features into develop.** One commit per feature in develop's history.
+   ```bash
+   git checkout develop
+   git merge --squash feature/node-01-classifier
+   git commit -m "Node 01: Classifier — binary DIRECT/SIMPLE_RAG classification"
+   ```
+
+5. **Merge `develop → main` only at milestones.** Main represents "this works end-to-end."
+   Milestones: pipeline complete, auth + frontend usable, full MVP.
+
+6. **Delete feature branches after merge.** No stale branches.
+
+7. **Commit messages follow this format:**
+   - Feature merge into develop: `Node NN: Name — one-line summary`
+   - Milestone merge into main: `Milestone: description`
+   - Within feature branches: free-form, but meaningful (not "wip" or "fix")
+
+### Implementation timeline (phased)
+
+```
+Phase 1 — Foundation [DONE]
+  main: skeleton, diagrams, docker-compose, core ABCs, service concretes
+
+Phase 2 — Pipeline nodes
+  develop ← feature/conftest-and-state        (FIRST — all nodes depend on it)
+  develop ← feature/node-01-classifier
+  develop ← feature/node-02-rewriter
+  develop ← feature/node-03-search
+  develop ← feature/node-04-reranker
+  develop ← feature/node-05-relevance-gate
+  develop ← feature/node-06-generator
+  develop ← feature/node-07-faithfulness
+  develop ← feature/node-00-cache             (depends on cache collection existing)
+  develop ← feature/graph-integration         (LAST — wires all nodes together)
+  main ← develop                              (MILESTONE: pipeline works)
+
+Phase 3 — Auth + Frontend
+  develop ← feature/auth-keycloak
+  develop ← feature/frontend-base             (base.html, macros, login page)
+  develop ← feature/frontend-search           (search page, SSE streaming)
+  main ← develop                              (MILESTONE: usable MVP)
+
+Phase 4 — Ingestion + Admin
+  develop ← feature/ingestion-pipeline
+  develop ← feature/admin-ui
+  develop ← feature/cache-and-rate-limit
+  main ← develop                              (MILESTONE: full MVP)
+```
+
+### Workflow per feature (practical)
+
+```bash
+# Start
+git checkout develop && git pull
+git checkout -b feature/node-01-classifier
+
+# Work (loop engineering cycle: contract → implement → test → verify)
+git add -A && git commit -m "Implement classifier node with binary routing"
+
+# Finish (after VERIFIED in log.md)
+git checkout develop && git pull
+git merge --squash feature/node-01-classifier
+git commit -m "Node 01: Classifier — binary DIRECT/SIMPLE_RAG classification"
+git push origin develop
+git branch -d feature/node-01-classifier
+git push origin --delete feature/node-01-classifier
+```
