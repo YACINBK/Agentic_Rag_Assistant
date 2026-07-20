@@ -42,9 +42,14 @@ Thumbs.db
 htmlcov/
 .pytest_cache/
 
-# State files (loop engineering)
-test_results/*.txt
-reviews/*.md
+# Loop engineering (process tooling, not deliverable)
+contracts/
+reviews/
+test_results/
+for_oc_*.md
+feature_list.json
+progress.md
+log.md
 
 # Alembic auto-generated
 alembic/versions/*.py
