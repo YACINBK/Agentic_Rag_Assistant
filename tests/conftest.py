@@ -43,6 +43,50 @@ def make_state(**overrides) -> PipelineState:
     return defaults
 
 
+def make_post_classifier_state(
+    classification: str = "SIMPLE_RAG", **overrides
+) -> PipelineState:
+    state = make_state()
+    state["classification"] = classification
+    if classification == "DIRECT":
+        state["direct_response"] = "I can only answer from Whitecape's indexed documents."
+    state.update(overrides)
+    return state
+
+
+def make_post_retrieval_state(num_chunks: int = 5, **overrides) -> PipelineState:
+    state = make_post_classifier_state()
+    state["rewritten_query"] = "company leave policy details"
+    state["sub_queries"] = []
+    state["retrieved_chunks"] = [
+        make_chunk(text=f"Chunk {i} about leave policy.", chunk_index=i, score=0.9 - i * 0.05)
+        for i in range(num_chunks)
+    ]
+    state.update(overrides)
+    return state
+
+
+def make_post_rerank_state(num_chunks: int = 3, **overrides) -> PipelineState:
+    state = make_post_retrieval_state(num_chunks=5)
+    state["reranked_chunks"] = [
+        make_chunk(text=f"Reranked chunk {i}.", chunk_index=i, score=0.95 - i * 0.1)
+        for i in range(num_chunks)
+    ]
+    state["relevance_pass"] = True
+    state.update(overrides)
+    return state
+
+
+def make_post_generation_state(**overrides) -> PipelineState:
+    state = make_post_rerank_state()
+    state["generated_answer"] = (
+        "According to the company handbook, employees are entitled to 25 days "
+        "of annual leave per year [source: leave_policy.pdf, p.3]."
+    )
+    state.update(overrides)
+    return state
+
+
 # ---------------------------------------------------------------------------
 # Mock services
 # ---------------------------------------------------------------------------
@@ -144,6 +188,26 @@ def mock_embedder():
 @pytest.fixture
 def sample_state():
     return make_state()
+
+
+@pytest.fixture
+def post_classifier_state():
+    return make_post_classifier_state()
+
+
+@pytest.fixture
+def post_retrieval_state():
+    return make_post_retrieval_state()
+
+
+@pytest.fixture
+def post_rerank_state():
+    return make_post_rerank_state()
+
+
+@pytest.fixture
+def post_generation_state():
+    return make_post_generation_state()
 
 
 @pytest.fixture
