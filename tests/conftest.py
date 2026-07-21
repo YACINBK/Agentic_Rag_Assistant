@@ -109,7 +109,7 @@ class MockLLMService(BaseLLMService):
 
 class MockVectorStore(BaseVectorStore):
     def __init__(self, results: list[ChunkPayload] | None = None):
-        self._results = results or [make_chunk()]
+        self._results = results if results is not None else [make_chunk()]
         self.search_calls: list[dict] = []
         self.upsert_calls: list[dict] = []
         self.delete_calls: list[dict] = []

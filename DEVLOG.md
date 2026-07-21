@@ -49,6 +49,7 @@ app/tasks/           Celery async tasks (ingestion, cache cleanup)
 rag_assistant/
 ├── CLAUDE.md                        # Specification (§0–§16) — source of truth
 ├── DEVLOG.md                        # This file — implementation log
+├── CHANGELOG.md                     # Chronological changelog
 ├── Dockerfile                       # Backend container (Python 3.11, uvicorn)
 ├── docker-compose.yml               # Full stack: 9 services
 ├── pyproject.toml                   # Dependencies + tooling config (pytest, ruff)
@@ -248,109 +249,4 @@ See CLAUDE.md §11 for the full specification. Summary of what's on disk:
 | `log.md` | Append-only — Evaluator writes PASS/FAIL per node per run |
 | `tests/conftest.py` | Shared fixtures — state factories, mock patterns for all nodes |
 
-**Current status:** Infrastructure in place. No node contracts written yet. No nodes implemented. `tests/conftest.py` contains state factories and mock fixture patterns ready for use once contracts are authored.
-
----
-
-## 9. Changelog
-
-### [2025-07-17] — Session-Based OIDC Auth Implementation
-
-**Scope:** Full implementation of session-based OIDC auth flow. Replaced JWT-validation stub with working authlib + Redis session implementation.
-
-**Changes:**
-- Rewrote `app/core/security.py` — new ABC methods: `get_authorization_url`, `handle_callback`, `get_current_user`, `logout`. Replaced `TokenClaims` with `UserSession` dataclass (user_id, keycloak_id, email, role, is_admin, is_owner).
-- Rewrote `app/services/auth.py` — `KeycloakAuthService` using `authlib.integrations.httpx_client.AsyncOAuth2Client` with PKCE. Server-side sessions in Redis (configurable TTL). OAuth state stored in Redis (5 min TTL). Lazy user/role sync to PostgreSQL on login.
-- Rewrote `app/main.py` — FastAPI lifespan (Redis init/cleanup), CSRF middleware (`starlette-csrf`), Jinja2 templates, static file serving, auth routes (`/auth/login`, `/auth/start`, `/auth/callback`, `/auth/logout`), session cookie management.
-- Created `app/templates/` — base layout (HTMX-boosted, nav), login page, dashboard page.
-- Created `app/static/css/base.css` — minimal styling for nav, login, dashboard.
-- Added `SECRET_KEY` and `SESSION_TTL_SECONDS` to settings and `.env.example`.
-- Fixed lint issues in models: unused imports, forward reference warnings (added `TYPE_CHECKING` guards), `== True` → `.is_(True)`.
-- Removed stale `python-jose` from venv (was still installed despite pyproject.toml removal).
-- Updated `app/core/exceptions.py` — `AuthenticationError` docstring updated from "JWT validation" to "OIDC flow or session validation".
-
-**Template structure:**
-```
-app/templates/
-├── base.html              # Layout: nav + content block + HTMX script
-├── pages/
-│   ├── login.html         # "Sign in with Keycloak" button
-│   └── dashboard.html     # Post-login landing (role display, search link)
-├── partials/              # HTMX partial responses (empty, ready for use)
-├── components/            # Reusable Jinja2 components (empty, ready for use)
-└── macros/                # Jinja2 macros (empty, ready for use)
-```
-
-**No Caddy/Nginx:** Confirmed no proxy layer in code or docker-compose. Docs mention Caddy as a future option only — nothing to remove.
-
----
-
-### [2025-07-16] — HTMX Monolith Migration
-
-**Scope:** Remove Nginx and Next.js frontend. Consolidate to single FastAPI process serving HTMX + Jinja2.
-
-**Changes:**
-- Removed `nginx/` directory (was untracked, contained `nginx.conf`)
-- Removed `nginx` and `frontend` services from `docker-compose.yml`
-- Backend now exposes port 8000 directly with `uvicorn --workers 4`
-- Added template/static volume mounts to backend service
-- Updated Redis comment to reflect triple role (session store + broker + backend)
-- Rewrote `diags/seq_1b_direct_and_cache.drawio` — removed Next.js/Nginx lifelines, shows FastAPI serving directly
-- Rewrote `diags/seq_2_document_ingestion.drawio` — removed Next.js/Nginx lifelines, shows session cookie auth
-- Rewrote `diags/seq_3_authentication.drawio` — fundamentally redesigned for session-based OIDC (PKCE, authlib, HTTP-only cookie, lazy PostgreSQL sync)
-- Updated `.gitignore` — added secrets patterns (`*api_key*`, `*.key`, `*.pem`), allowed `diags/` to be committed
-
-**Auth flow (new):**
-1. User hits `/login` → FastAPI generates PKCE challenge + redirects to Keycloak
-2. User authenticates at Keycloak → callback with authorization code
-3. FastAPI exchanges code for tokens (server-side, PKCE-verified)
-4. Lazy sync: upsert User in PostgreSQL from JWT claims (role, email, keycloak_id)
-5. Create server-side session in Redis → Set-Cookie (HTTP-only, Secure, SameSite=Lax)
-6. CSRF middleware protects all state-changing endpoints
-
-**Docker Compose:** 11 services → 9 services. No proxy layer.
-
----
-
-### [2025-07-15] — Service Layer Skeleton
-
-**Scope:** Concrete implementations of all core service ABCs.
-
-**Created:**
-- `app/services/auth.py` — `KeycloakAuthService`: OIDC via authlib, session validation, lazy user sync
-- `app/services/llm.py` — `LiteLLMService`: wraps `litellm.acompletion`, respects settings model names
-- `app/services/embedder.py` — `OllamaEmbedder`: BGE-M3 embeddings via Ollama HTTP API
-- `app/services/reranker.py` — `TEIReranker`: POST to TEI `/rerank` endpoint, returns scores
-- `app/services/vector_store.py` — `QdrantVectorStore`: hybrid search with mandatory role filter, upsert, delete
-- `app/services/__init__.py` — re-exports all service classes
-- `app/core/logging.py` — structlog configuration (JSON, bound context, stdlib bridge)
-- `tests/conftest.py` — state factories + mock fixtures for loop engineering
-
----
-
-### [2025-07-14] — Core Skeleton + Diagrams
-
-**Scope:** Project structure, core ABCs, ORM models, Docker Compose, all diagrams.
-
-**Created:**
-- Full `app/core/` layer: ABCs (`base_node`, `security`, `services/*`), models (`role`, `user`, `document`, `audit_log`, `escalation_event`), `state.py`, `settings.py`, `exceptions.py`
-- `docker-compose.yml` — 9 services (see §6)
-- `Dockerfile`, `pyproject.toml`, `.env.example`, `alembic.ini`
-- Loop engineering files: `run_loop.sh`, `feature_list.json`, `progress.md`, `log.md`
-- `app/main.py` — FastAPI app with `/health` endpoint
-- `app/tasks/` — Celery worker, ingestion task, cache cleanup task
-
-**Diagrams created:**
-- 5 sequence diagrams (seq_1a through seq_3)
-- 3 use case diagrams (uc_1a through uc_1c)
-- 8 class diagrams (covering all subsystems)
-
-**Design decision:** Core-abstraction pattern (Java-style). `app/core/` contains all ABCs and shared types. Everything else inherits. Chosen for testability (mock at ABC boundary), vendor independence (CLAUDE.md §4), and alignment with contract-driven loop engineering (CLAUDE.md §11).
-
----
-
-### [2025-07-14] — Initial Commit
-
-**Scope:** Repository initialization.
-
-**Created:** `.gitignore`, project README, initial diagrams directory.
+Current status: Infrastructure in place. Node 01 implemented (see CHANGELOG.md). Remaining nodes: 00, 02–07, graph integration.
