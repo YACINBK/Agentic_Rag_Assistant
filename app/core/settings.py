@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
     QDRANT_COLLECTION: str = "documents"
+    QDRANT_SEARCH_LIMIT: int = 10
     QDRANT_CACHE_COLLECTION: str = "semantic_cache"
     CACHE_SIMILARITY_THRESHOLD: float = 0.92
     CACHE_TTL_HOURS: int = 24
@@ -31,6 +32,7 @@ class Settings(BaseSettings):
     REWRITER_MODEL: str = "ollama/qwen2.5:14b"
     GENERATOR_MODEL: str = "ollama/qwen2.5:32b"
     FAITHFULNESS_MODEL: str | None = None
+    FAITHFULNESS_THRESHOLD: float = 0.5
 
     # --- Embeddings (BGE-M3 via Ollama) ---
     OLLAMA_BASE_URL: str = "http://localhost:11434"
