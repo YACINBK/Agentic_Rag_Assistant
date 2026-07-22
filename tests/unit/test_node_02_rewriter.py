@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from app.core.settings import Settings
 from app.pipeline.nodes.node_02_rewriter_decomposer import RewriterNode
 from tests.conftest import MockLLMService, make_state
@@ -37,7 +35,6 @@ class TestRewriterNode:
 
     async def test_llm_failure_falls_back_to_original(self) -> None:
         mock_llm = MockLLMService(response="irrelevant")
-        original_complete = mock_llm.complete
 
         async def failing_complete(model, messages, temperature=0.0):
             mock_llm.calls.append({"model": model, "messages": messages, "temperature": temperature})
