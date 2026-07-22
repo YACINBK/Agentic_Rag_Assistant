@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.core.base_node import BaseNode
+from app.core.exceptions import ClassificationError
 from app.core.services.llm import BaseLLMService
 from app.core.settings import Settings
 from app.core.state import PipelineState
@@ -35,7 +36,9 @@ class ClassifierNode(BaseNode):
         return "classifier"
 
     async def execute(self, state: PipelineState) -> PipelineState:
-        query = state["query"]
+        query = state.get("query")
+        if not query or not query.strip():
+            raise ClassificationError("query is missing or empty")
 
         if self._settings.CLASSIFIER_MODEL == "manual":
             return {**state, "classification": "SIMPLE_RAG"}

@@ -61,6 +61,10 @@ diags_backup/
 # Resumes / temporary developer handoff text files
 *resume*.txt
 
+# Pre-decision drafts / scratch notes (kept locally, not deliverables)
+recommendations.md
+README_status.md
+
 # Local databases
 *.db
 *.sqlite

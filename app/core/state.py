@@ -57,7 +57,6 @@ class PipelineState(TypedDict, total=False):
 
     # --- Node 5b: Retry ---
     retry_attempted: bool
-    retry_pass: bool
 
     # --- Node 6: Generator ---
     generated_answer: str  # BUFFERED — not streamed

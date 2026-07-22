@@ -31,12 +31,15 @@ class CacheCheckNode(BaseNode):
         except Exception:
             return {**state, "cache_hit": False}
 
-        results = await self._vector_store.search(
-            collection=self._settings.QDRANT_CACHE_COLLECTION,
-            query_vector=vector,
-            allowed_roles=[user_role],
-            limit=1,
-        )
+        try:
+            results = await self._vector_store.search(
+                collection=self._settings.QDRANT_CACHE_COLLECTION,
+                query_vector=vector,
+                allowed_roles=[user_role],
+                limit=1,
+            )
+        except Exception:
+            return {**state, "cache_hit": False}
 
         if results and results[0]["score"] >= self._settings.CACHE_SIMILARITY_THRESHOLD:
             return {

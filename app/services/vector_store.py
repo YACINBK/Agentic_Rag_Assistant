@@ -21,13 +21,21 @@ class QdrantVectorStore(BaseVectorStore):
         allowed_roles: list[str],
         limit: int = 10,
     ) -> list[ChunkPayload]:
+        # Role filter field differs by collection schema (CLAUDE.md §8 vs §9):
+        #   documents      → payload key "allowed_roles" (list[str])
+        #   semantic_cache → payload key "role"          (str)
+        role_key = (
+            "role"
+            if collection == settings.QDRANT_CACHE_COLLECTION
+            else "allowed_roles"
+        )
         results = await self._client.query_points(
             collection_name=collection,
             query=query_vector,
             query_filter=models.Filter(
                 must=[
                     models.FieldCondition(
-                        key="allowed_roles",
+                        key=role_key,
                         match=models.MatchAny(any=allowed_roles),
                     )
                 ]
@@ -37,11 +45,16 @@ class QdrantVectorStore(BaseVectorStore):
         )
         return [
             ChunkPayload(
-                text=point.payload.get("text", ""),
+                chunk_id=str(point.id),
+                # documents store the chunk under "text"; semantic_cache stores
+                # the generated answer under "answer_text" (CLAUDE.md §9).
+                text=point.payload.get("text") or point.payload.get("answer_text", ""),
                 document_id=point.payload.get("document_id", ""),
+                original_filename=point.payload.get("original_filename", ""),
+                category=point.payload.get("category", ""),
+                page_number=point.payload.get("page_number", 0),
                 chunk_index=point.payload.get("chunk_index", 0),
                 score=point.score,
-                metadata=point.payload.get("metadata", {}),
             )
             for point in results.points
         ]

@@ -23,7 +23,7 @@ app/core/           Abstract contracts (ABCs, Protocols, shared types)
     ├── models/               SQLAlchemy ORM models (the concrete DB schema)
     ├── state.py              PipelineState TypedDict + ChunkPayload
     ├── settings.py           Pydantic Settings — single env config source
-    ├── security.py           BaseAuthService ABC + TokenClaims
+    ├── security.py           BaseAuthService ABC + UserSession dataclass
     ├── logging.py            structlog configuration
     └── exceptions.py         Typed exception hierarchy
          |
@@ -93,8 +93,18 @@ rag_assistant/
 │   │
 │   ├── pipeline/
 │   │   ├── __init__.py
-│   │   └── nodes/                   # One file per pipeline node (not yet implemented)
-│   │       └── __init__.py
+│   │   ├── graph.py                 # LangGraph StateGraph — wires all 9 nodes + conditional routing
+│   │   └── nodes/                   # One file per pipeline node (all implemented)
+│   │       ├── __init__.py
+│   │       ├── node_00_cache_check.py        # Semantic cache lookup (role-scoped, 0.92 threshold)
+│   │       ├── node_01_classifier.py         # Binary DIRECT/SIMPLE_RAG routing
+│   │       ├── node_02_rewriter_decomposer.py# Query rewrite for retrieval quality
+│   │       ├── node_03_parallel_qdrant_search.py # Embed + role-filtered Qdrant search
+│   │       ├── node_04_reranker.py           # bge-reranker-v2-m3 cross-encoder re-scoring
+│   │       ├── node_05_relevance_gate.py     # Threshold check on top reranker score
+│   │       ├── node_05b_retry.py             # One-shot query broadening on gate failure
+│   │       ├── node_06_generator.py          # Buffered, cited, role-framed answer
+│   │       └── node_07_faithfulness.py       # Token-overlap grounding check
 │   │
 │   ├── api/
 │   │   ├── __init__.py
@@ -104,7 +114,7 @@ rag_assistant/
 │   ├── tasks/
 │   │   ├── __init__.py
 │   │   ├── worker.py                # Celery app creation + config
-│   │   ├── ingestion.py             # Document ingestion task (async via Redis)
+│   │   ├── ingestion.py             # Document ingestion task (async via Redis) — stub, Phase 4
 │   │   └── cache_cleanup.py         # TTL-based semantic cache purge (Celery beat)
 │   │
 │   ├── templates/
@@ -119,15 +129,10 @@ rag_assistant/
 │       └── js/                      # Client-side JS (empty, ready for use)
 │
 ├── tests/
-│   ├── conftest.py                  # Shared fixtures: state factories + mock patterns
-│   ├── unit/
-│   │   └── __init__.py
+│   ├── conftest.py                  # Shared fixtures: state factories + mock services
+│   ├── unit/                        # One test module per node (9 modules)
 │   └── integration/
-│       └── __init__.py
-│
-├── contracts/                       # Loop engineering node contracts (CLAUDE.md §11)
-├── reviews/                         # Generator summaries per node
-├── test_results/                    # pytest output per node
+│       └── test_graph.py            # End-to-end pipeline routing tests
 │
 └── diags/                           # All architecture diagrams (.drawio format)
     ├── seq_1a_simple_rag_query.drawio
@@ -234,9 +239,50 @@ All diagrams: black strokes, white fill, plain text only. Editable at diagrams.n
 
 ---
 
-## 8. Loop Engineering Setup
+## 8. Pipeline implementation — all 9 nodes built
 
-See CLAUDE.md §11 for the full specification. Summary of what's on disk:
+The full MVP pipeline is implemented and wired. Every node subclasses `BaseNode`
+(`name` property + `async execute(state) → state`), takes its dependencies via
+constructor injection, and returns a new merged state dict (never mutates input).
+`app/pipeline/graph.py` composes them into a LangGraph `StateGraph` with conditional
+routing. **57 tests pass (51 unit + 6 integration).**
+
+| Node | Class | LLM | Behaviour |
+|---|---|---|---|
+| 00 Cache Check | `CacheCheckNode` | — | Embeds query, searches `semantic_cache` (role-scoped, 0.92 threshold). Hit → return cached answer, skip 1–7. Fail-open: embed **or** search failure → miss. |
+| 01 Classifier | `ClassifierNode` | `CLASSIFIER_MODEL` | Binary DIRECT/SIMPLE_RAG. Raises `ClassificationError` on missing/empty query. Manual mode + fail-open to SIMPLE_RAG. |
+| 02 Rewriter | `RewriterNode` | `REWRITER_MODEL` | Rewrites query for retrieval. Skips on DIRECT. Fail-open to original query. (Decomposition is post-MVP.) |
+| 03 Qdrant Search | `QdrantSearchNode` | — | Embeds rewritten query, searches `documents` with role filter `[user_role, "all"]`. Failures raise `RetrievalError`. |
+| 04 Reranker | `RerankerNode` | — | bge-reranker-v2-m3 via TEI. Re-scores + sorts descending. Validates score count matches chunk count. |
+| 05 Relevance Gate | `RelevanceGateNode` | — | `relevance_pass = max(score) >= RELEVANCE_THRESHOLD`. Empty chunks → fail. |
+| 05b Retry | `RetryNode` | `REWRITER_MODEL` | One-shot broadening of the failed query via LLM. Idempotent guard (`retry_attempted`) prevents loops. Fail-open to original query. |
+| 06 Generator | `GeneratorNode` | `GENERATOR_MODEL` | Buffered, cited, role-framed answer from top chunks. Empty chunks → honest fallback. LLM failure → `GenerationError`. |
+| 07 Faithfulness | `FaithfulnessNode` | — | Token-overlap grounding check on the buffered answer. Per-claim ≥30% overlap, overall `is_faithful = score >= FAITHFULNESS_THRESHOLD`. Zero LLM cost. |
+
+**Routing (`graph.py`):**
+- `cache_check` → hit `END` / miss `classifier`
+- `classifier` → DIRECT `END` / SIMPLE_RAG `rewriter`
+- `rewriter → qdrant_search → reranker → relevance_gate` (sequential)
+- `relevance_gate` → pass `generator` / fail+not-retried `retry` / fail+retried `END`
+- `retry → qdrant_search` (loops back once)
+- `generator → faithfulness → END`
+
+The faithfulness verdict (`is_faithful`) is surfaced in state; the SSE orchestrator
+(Phase 3) decides stream-vs-escalate. The graph itself always terminates at `END`.
+
+**Per-node reference:** `docs/pipeline/` contains one detailed document per node
+(role, interface, state contract, behaviour, error handling, design rationale, test
+coverage) plus an overview — see `docs/pipeline/README.md`.
+
+---
+
+## 9. Loop Engineering Setup
+
+See CLAUDE.md §11 for the full specification. The loop-engineering artifacts
+(`contracts/`, `reviews/`, `test_results/`, `feature_list.json`, `progress.md`,
+`log.md`, `for_oc_*.md`, `run_loop.sh`) are **process tooling, not project deliverables**,
+and are intentionally excluded from git (see `.gitignore`). They live on the
+developer's machine to drive the Planner → Generator → Evaluator cycle.
 
 | Path | Purpose |
 |---|---|
@@ -247,6 +293,9 @@ See CLAUDE.md §11 for the full specification. Summary of what's on disk:
 | `feature_list.json` | Tracks node status: done / in_progress / next / blocked |
 | `progress.md` | Current sprint, active contract, last verified state |
 | `log.md` | Append-only — Evaluator writes PASS/FAIL per node per run |
-| `tests/conftest.py` | Shared fixtures — state factories, mock patterns for all nodes |
+| `tests/conftest.py` | Shared fixtures — state factories, mock patterns for all nodes (tracked — it is test code) |
 
-Current status: Infrastructure in place. Node 01 implemented (see CHANGELOG.md). Remaining nodes: 00, 02–07, graph integration.
+**Current status:** Phase 2 (pipeline) complete — all 9 nodes + graph integration
+implemented and verified, 57 tests passing. Next: Phase 3 (auth wiring + frontend).
+See `CHANGELOG.md` for the chronological build log.
+

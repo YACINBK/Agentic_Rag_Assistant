@@ -73,3 +73,25 @@ class TestCacheCheckNode:
 
         assert store.search_calls[0]["allowed_roles"] == ["developer"]
         assert store.search_calls[0]["collection"] == "semantic_cache"
+
+    async def test_vector_store_failure_returns_miss(self) -> None:
+        embedder = MockEmbedder()
+        store = MockVectorStore()
+
+        async def failing_search(collection, query_vector, allowed_roles, limit=10):
+            store.search_calls.append({
+                "collection": collection,
+                "query_vector": query_vector,
+                "allowed_roles": allowed_roles,
+                "limit": limit,
+            })
+            raise RuntimeError("Qdrant connection timeout")
+
+        store.search = failing_search
+        settings = Settings()
+        node = CacheCheckNode(embedder=embedder, vector_store=store, settings=settings)
+        state = make_state()
+
+        result = await node.execute(state)
+
+        assert result["cache_hit"] is False

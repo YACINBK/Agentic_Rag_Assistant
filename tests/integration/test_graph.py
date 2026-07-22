@@ -27,6 +27,7 @@ def _build_nodes(
     llm_classifier: MockLLMService | None = None,
     llm_rewriter: MockLLMService | None = None,
     llm_generator: MockLLMService | None = None,
+    llm_retry: MockLLMService | None = None,
     embedder: MockEmbedder | None = None,
     vector_store: MockVectorStore | None = None,
     reranker: MockReranker | None = None,
@@ -58,7 +59,10 @@ def _build_nodes(
             settings=settings,
         ),
         "relevance_gate": RelevanceGateNode(settings=settings),
-        "retry": RetryNode(settings=settings),
+        "retry": RetryNode(
+            llm=llm_retry or MockLLMService(response="broadened query"),
+            settings=settings,
+        ),
         "generator": GeneratorNode(
             llm=llm_generator or MockLLMService(response="Generated answer."),
             settings=settings,
@@ -129,19 +133,20 @@ class TestGraphIntegration:
 
     async def test_relevance_fail_then_retry_fail_returns_fallback(self) -> None:
         low_chunk = make_chunk(score=0.2)
+        test_settings = Settings(RELEVANCE_THRESHOLD=0.5)
         nodes = _build_nodes(
             llm_classifier=MockLLMService(response="SIMPLE_RAG"),
             reranker=MockReranker(scores=[0.2]),
-            settings=Settings(RELEVANCE_THRESHOLD=0.5),
+            settings=test_settings,
         )
         nodes["qdrant_search"] = QdrantSearchNode(
             embedder=MockEmbedder(),
             vector_store=MockVectorStore(results=[low_chunk]),
-            settings=Settings(),
+            settings=test_settings,
         )
         nodes["reranker"] = RerankerNode(
             reranker=MockReranker(scores=[0.2]),
-            settings=Settings(),
+            settings=test_settings,
         )
         graph = build_pipeline(nodes)
 

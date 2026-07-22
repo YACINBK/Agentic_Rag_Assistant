@@ -4,6 +4,40 @@ All notable changes to the Whitecape Knowledge Assistant project.
 
 ---
 
+## [2026-07-22] — Independent Review & Coherence Fixes
+
+**Scope:** Full re-review of the pipeline after the previous verification round was
+run by the same agent that generated the code (the independent Evaluator was
+unavailable). This pass caught real defects the self-review missed, plus
+documentation drift.
+
+**Pipeline / node fixes:**
+
+| Severity | Issue | Fix |
+|---|---|---|
+| Critical | Node 00: `vector_store.search()` failure propagated uncaught — a Qdrant outage crashed the whole pipeline at the first node | Wrapped in try/except, fail-open to cache miss |
+| High | Node 01: missing/empty query raised a raw `KeyError` instead of the contracted `ClassificationError` | Added explicit validation; added 4 missing contract tests (9 total) |
+| High | Node 05b: "query broadening" merely reset to the original query, contradicting spec + commit message | Rewrote to broaden via `REWRITER_MODEL` with fail-open; removed dead `retry_pass` state field |
+
+**Service-layer fixes (`app/services/`, not covered by mocked unit tests):**
+
+| Severity | Issue | Fix |
+|---|---|---|
+| High | `QdrantVectorStore.search` built a malformed `ChunkPayload` (non-existent `metadata=` key, missing `original_filename`/`category`/`page_number`/`chunk_id`) — every citation would render `(source: unknown)` | Build the full `ChunkPayload`; map cache answers from `answer_text` |
+| High | Role filter hardcoded to `allowed_roles` for both collections; `semantic_cache` uses a `role` field (CLAUDE.md §9) | Made the filter key schema-aware per collection |
+
+**Documentation:**
+- `DEVLOG.md` rewritten as the clean handoff doc: all 9 nodes + `graph.py` now
+  reflected in the directory tree; added §8 pipeline-implementation reference;
+  clarified that loop-engineering files are gitignored process tooling.
+- `recommendations.md` and `README_status.md` untracked (pre-decision drafts that
+  contradict the locked spec; kept locally, excluded from the repo).
+- Added top-level `README.md`.
+
+**All 57 tests pass (51 unit + 6 integration).**
+
+---
+
 ## [2026-07-20] — Graph Integration
 
 **Scope:** Wired all 9 nodes into LangGraph StateGraph with conditional routing. Final piece of the MVP pipeline.
@@ -105,6 +139,9 @@ All notable changes to the Whitecape Knowledge Assistant project.
 - `contracts/node_05b_retry.md` — formal contract
 
 **Evaluator verdict:** PASS (3/3 tests).
+
+> **Superseded 2026-07-22:** this original version only reset the query to the
+> original. It was rewritten to broaden via `REWRITER_MODEL` (see the top entry).
 
 ---
 
