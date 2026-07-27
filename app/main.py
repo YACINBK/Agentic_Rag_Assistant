@@ -10,6 +10,7 @@ from starlette_csrf import CSRFMiddleware
 from app.core.logging import configure_logging, get_logger
 from app.core.models.base import async_session, engine
 from app.core.settings import settings
+from app.api.error_handlers import register_error_handlers
 from app.services.auth import KeycloakAuthService, SESSION_COOKIE
 
 configure_logging()
@@ -58,7 +59,7 @@ async def health():
 
 @app.get("/auth/login", name="login_page")
 async def login_page(request: Request):
-    return templates.TemplateResponse("pages/login.html", {"request": request})
+    return templates.TemplateResponse(request, "pages/login.html")
 
 
 @app.get("/auth/start")
@@ -116,4 +117,4 @@ async def index(request: Request):
     if not user:
         return RedirectResponse(url="/auth/login")
 
-    return templates.TemplateResponse("pages/dashboard.html", {"request": request, "user": user})
+    return templates.TemplateResponse(request, "pages/dashboard.html", {"user": user})
