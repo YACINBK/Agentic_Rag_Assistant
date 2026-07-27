@@ -303,10 +303,7 @@ def make_user_model(**overrides):
         "is_owner": False,
     }
     defaults.update(overrides)
-    user = User.__new__(User)
-    for k, v in defaults.items():
-        object.__setattr__(user, k, v)
-    return user
+    return User(**defaults)
 
 
 def make_role_model(**overrides):
@@ -319,10 +316,7 @@ def make_role_model(**overrides):
         "persona_prompt": None,
     }
     defaults.update(overrides)
-    role = Role.__new__(Role)
-    for k, v in defaults.items():
-        object.__setattr__(role, k, v)
-    return role
+    return Role(**defaults)
 
 
 def serialize_user_session(session: UserSession) -> str:
