@@ -108,6 +108,8 @@ rag_assistant/
 │   │
 │   ├── api/
 │   │   ├── __init__.py
+│   │   ├── dependencies.py              # require_auth, require_admin, require_owner
+│   │   ├── error_handlers.py            # register_error_handlers() — client-aware AuthN/AuthZ responses
 │   │   └── routes/
 │   │       └── __init__.py
 │   │
@@ -129,10 +131,11 @@ rag_assistant/
 │       └── js/                      # Client-side JS (empty, ready for use)
 │
 ├── tests/
-│   ├── conftest.py                  # Shared fixtures: state factories + mock services
-│   ├── unit/                        # One test module per node (9 modules)
+│   ├── conftest.py                  # Shared fixtures: state factories, mock services, auth mocks
+│   ├── unit/                        # One test module per node + auth modules (12 modules)
 │   └── integration/
-│       └── test_graph.py            # End-to-end pipeline routing tests
+│       ├── test_graph.py            # End-to-end pipeline routing tests
+│       └── test_auth_flow.py        # Full OIDC chain: route → dependency → service → error handler
 │
 └── diags/                           # All architecture diagrams (.drawio format)
     ├── seq_1a_simple_rag_query.drawio
@@ -295,7 +298,34 @@ developer's machine to drive the Planner → Generator → Evaluator cycle.
 | `log.md` | Append-only — Evaluator writes PASS/FAIL per node per run |
 | `tests/conftest.py` | Shared fixtures — state factories, mock patterns for all nodes (tracked — it is test code) |
 
-**Current status:** Phase 2 (pipeline) complete — all 9 nodes + graph integration
-implemented and verified, 57 tests passing. Next: Phase 3 (auth wiring + frontend).
+**Current status:** Phase 3a (auth hardening) complete — all 4 auth modules verified,
+83 tests passing (57 pipeline + 26 auth). Next: Phase 3b (frontend).
 See `CHANGELOG.md` for the chronological build log.
+
+---
+
+## 10. Auth layer — Phase 3a
+
+The full session-based auth layer is implemented and wired. Keycloak OIDC Authorization
+Code + PKCE, server-side sessions in Redis, HTTP-only cookie. **26 tests pass (20 unit + 6 integration).**
+
+| Module | File | What |
+|---|---|---|
+| Dependency chain | `app/api/dependencies.py` | `require_auth → require_admin → require_owner` via `Depends()`. Raises `AuthenticationError` or `AuthorizationError`. |
+| Error handlers | `app/api/error_handlers.py` | `register_error_handlers(app)` — detects HTMX / HTML / JSON client, returns redirect / 403 page / JSON accordingly. Wired in `app/main.py`. |
+| Auth service | `app/services/auth.py` | `KeycloakAuthService` — full OIDC flow, PKCE, lazy PostgreSQL sync on login, Redis session write/read/delete. |
+| 403 templates | `app/templates/pages/403.html`, `app/templates/partials/403.html` | Full page + HTMX-swappable fragment. |
+
+**Security layers:**
+- Three-layer CSRF: OAuth `state` parameter (login-CSRF) + PKCE `code_verifier` (code interception) + Starlette CSRF middleware (form CSRF). All three present, none redundant.
+- Qdrant role filter remains the hard retrieval boundary (unchanged from Phase 2).
+- Session IDs: `secrets.token_urlsafe(32)` — cryptographically secure.
+- Cookie: `httponly=True`, `samesite="lax"`, `secure=False` (deliberate — internal HTTP deployment; set `secure=True` when Caddy TLS is enabled).
+
+**Design decisions:**
+- Absolute TTL session expiry (no sliding). Accepted trade-off: a disabled Keycloak account remains valid until TTL expires. Post-MVP: add Keycloak introspection on sensitive operations.
+- `UserSession` holds `user_id, keycloak_id, email, role, is_admin, is_owner` — no access token, no refresh token retained server-side.
+- Lazy Keycloak sync: user row created/updated in PostgreSQL on first login, not via webhook.
+
+**Per-module reference:** `docs/auth/` contains one detailed document per module plus an overview — see `docs/auth/README.md`.
 

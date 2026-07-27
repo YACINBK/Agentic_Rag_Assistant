@@ -4,7 +4,46 @@ All notable changes to the Whitecape Knowledge Assistant project.
 
 ---
 
-## [2026-07-22] — Independent Review & Coherence Fixes
+## [2026-07-27] — Phase 3a: Auth Hardening + Middleware
+
+**Scope:** Full auth layer — dependency injection, error handling, service tests, integration tests.
+All 4 modules verified via contract-driven loop engineering. 26 new tests, all PASS.
+
+**New files:**
+
+| File | What |
+|---|---|
+| `app/api/dependencies.py` | `require_auth`, `require_admin`, `require_owner` — session-based FastAPI dependency chain |
+| `app/api/error_handlers.py` | `register_error_handlers` — client-aware AuthN/AuthZ exception → HTML/HTMX/JSON response |
+| `app/templates/pages/403.html` | Full 403 forbidden page (extends base.html) |
+| `app/templates/partials/403.html` | HTMX-swappable 403 fragment (no `<html>` wrapper) |
+| `tests/unit/test_auth_dependencies.py` | 7 tests — require_auth/admin/owner dependency chain |
+| `tests/unit/test_auth_error_handling.py` | 6 tests — HTML/HTMX/JSON error response routing |
+| `tests/unit/test_auth_service.py` | 7 tests — KeycloakAuthService regression coverage |
+| `tests/integration/test_auth_flow.py` | 6 tests — full OIDC chain end-to-end via TestClient |
+| `docs/auth/README.md` | Auth layer overview — OIDC flow diagram, security layers, design decisions |
+| `docs/auth/auth_dependencies.md` | Reference doc — require_auth/admin/owner |
+| `docs/auth/auth_error_handling.md` | Reference doc — error handler response matrix |
+| `docs/auth/auth_service.md` | Reference doc — KeycloakAuthService OIDC flow |
+| `docs/auth/auth_integration.md` | Reference doc — integration test coverage |
+
+**Modified files:**
+
+| File | Change |
+|---|---|
+| `app/main.py` | Wire `register_error_handlers(app)` at startup |
+| `tests/conftest.py` | Add auth mocks (MockAuthService, MockRedis, session factories); fix `make_user_model`/`make_role_model` to use declarative constructor instead of broken `__new__` + `object.__setattr__` |
+
+**Security decisions documented:**
+- Absolute TTL session expiry (no sliding) — accepted trade-off for MVP; Keycloak account disablement takes effect at TTL expiry
+- Three-layer CSRF protection: OAuth state + PKCE + Starlette middleware — all three present, none redundant
+- `secure=False` for internal HTTP deployment — deliberate, tied to TLS deployment option
+
+**All 83 tests pass (57 pipeline + 26 auth).**
+
+---
+
+
 
 **Scope:** Full re-review of the pipeline after the previous verification round was
 run by the same agent that generated the code (the independent Evaluator was

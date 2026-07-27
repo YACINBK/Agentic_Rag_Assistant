@@ -20,9 +20,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.redis = aioredis.from_url(
-        settings.REDIS_URL, decode_responses=True
-    )
+    app.state.redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
     logger.info("application_started")
     yield
     await app.state.redis.aclose()
@@ -34,6 +32,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+register_error_handlers(app)
 
 app.add_middleware(
     CSRFMiddleware,
@@ -116,6 +116,4 @@ async def index(request: Request):
     if not user:
         return RedirectResponse(url="/auth/login")
 
-    return templates.TemplateResponse("pages/dashboard.html", {
-        "request": request, "user": user
-    })
+    return templates.TemplateResponse("pages/dashboard.html", {"request": request, "user": user})
