@@ -1,6 +1,6 @@
 # Auth Layer — Overview
 
-**Phase:** 3a · **Status:** In progress
+**Phase:** 3a · **Status:** Complete
 
 ---
 
@@ -51,8 +51,18 @@ sequenceDiagram
 | PKCE (S256) | Prevents authorization code interception. Standard for public/confidential clients. |
 | `UserSession` dataclass, not ORM object | Session validation is Redis-only — no DB call per request. |
 | Separate dependencies from auth service | `KeycloakAuthService` handles OIDC flow. `require_auth` handles session validation. Different concerns, different code paths. |
+| Absolute TTL, no sliding expiration | Sessions expire at a fixed wall-clock time (`SESSION_TTL_SECONDS`). Not renewed on activity. **Accepted trade-off:** if a Keycloak account is disabled mid-session, the local Redis session remains valid until TTL expires. Post-MVP mitigation: add a Keycloak token introspection call on sensitive operations (admin actions, document upload). |
+| `secure=False` for internal HTTP deployment | The `Secure` cookie attribute prevents the cookie being sent over plain HTTP. Internal deployments without TLS must set this to `False` or the cookie is silently dropped and every request appears unauthenticated. Set `secure=True` when behind Caddy/TLS. |
 
-## 3. Security layers
+## 3. Three-layer CSRF protection
+
+These three mechanisms are distinct and non-redundant — none substitutes for another:
+
+| Layer | Protects against | Where |
+|---|---|---|
+| OAuth `state` parameter | Login-CSRF — attacker tricks victim's browser into completing an OAuth flow the attacker initiated | `app/services/auth.py` — state stored in Redis, verified on callback |
+| PKCE `code_verifier` / `code_challenge` | Authorization code interception — attacker intercepts the code in transit and exchanges it themselves | `app/services/auth.py` — S256 challenge, verifier stored in Redis |
+| Starlette CSRF middleware | Form CSRF — attacker tricks an already-authenticated user into submitting a state-changing form | `app/main.py` — token in every form, validated on POST |
 
 | Layer | What | Where |
 |---|---|---|
@@ -66,10 +76,10 @@ sequenceDiagram
 
 | Module | File | Doc | Status |
 |---|---|---|---|
-| Auth service (OIDC) | `app/services/auth.py` | [auth_service.md](auth_service.md) | Built (Phase 1), tests pending |
+| Auth service (OIDC) | `app/services/auth.py` | [auth_service.md](auth_service.md) | Verified |
 | Auth dependencies | `app/api/dependencies.py` | [auth_dependencies.md](auth_dependencies.md) | Verified |
 | Error handlers | `app/api/error_handlers.py` | [auth_error_handling.md](auth_error_handling.md) | Verified |
-| Auth routes | `app/main.py` (inline) | — | Built (Phase 1) |
+| Integration tests | `tests/integration/test_auth_flow.py` | [auth_integration.md](auth_integration.md) | Verified |
 
 ## 5. Session lifecycle
 
