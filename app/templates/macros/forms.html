@@ -1,0 +1,8 @@
+{# Form field macro — renders label + input + optional error in a form-group div. #}
+{% macro form_field(name, label, type="text", error=None, required=False, placeholder="") %}
+<div class="form-group {{ 'has-error' if error }}">
+    <label for="{{ name }}">{{ label }}</label>
+    <input type="{{ type }}" name="{{ name }}" id="{{ name }}" placeholder="{{ placeholder }}" {{ 'required' if required }}>
+    {% if error %}<span class="error-text">{{ error }}</span>{% endif %}
+</div>
+{% endmacro %}

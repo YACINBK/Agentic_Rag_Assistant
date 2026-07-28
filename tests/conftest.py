@@ -352,3 +352,59 @@ def admin_session():
 @pytest.fixture
 def owner_session():
     return make_user_session(is_admin=True, is_owner=True)
+
+
+# ---------------------------------------------------------------------------
+# Frontend / search test helpers
+# ---------------------------------------------------------------------------
+
+
+def make_faithful_pipeline_state(**overrides) -> PipelineState:
+    """Post-pipeline state simulating a successful, faithful answer."""
+    state = make_post_generation_state()
+    state["is_faithful"] = True
+    state["faithfulness_score"] = 0.85
+    state.update(overrides)
+    return state
+
+
+def make_unfaithful_pipeline_state(**overrides) -> PipelineState:
+    """Post-pipeline state simulating a faithfulness check failure."""
+    state = make_post_generation_state()
+    state["is_faithful"] = False
+    state["faithfulness_score"] = 0.2
+    state.update(overrides)
+    return state
+
+
+def make_direct_pipeline_state(**overrides) -> PipelineState:
+    """Post-pipeline state simulating a DIRECT classification (no retrieval)."""
+    state = make_state()
+    state["classification"] = "DIRECT"
+    state["cache_hit"] = False
+    state["direct_response"] = "I can only answer from Whitecape's indexed documents."
+    state.update(overrides)
+    return state
+
+
+def make_cache_hit_pipeline_state(**overrides) -> PipelineState:
+    """Post-pipeline state simulating a semantic cache hit."""
+    state = make_state()
+    state["cache_hit"] = True
+    state["cached_answer"] = "Cached: employees get 25 days of annual leave."
+    state.update(overrides)
+    return state
+
+
+def make_authenticated_redis(
+    user: UserSession | None = None,
+    session_id: str = "test-session-id",
+) -> tuple[MockRedis, str]:
+    """Create a MockRedis pre-loaded with a valid user session.
+
+    Returns (mock_redis, session_id) — set the session_id as the cookie value.
+    """
+    if user is None:
+        user = make_user_session()
+    redis = MockRedis(data={f"session:{session_id}": serialize_user_session(user)})
+    return redis, session_id

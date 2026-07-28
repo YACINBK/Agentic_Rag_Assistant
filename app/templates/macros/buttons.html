@@ -1,0 +1,8 @@
+{# Button macro — renders <button> or <a> (when href given). Extra kwargs (hx_post, ...) become attributes with underscores converted to hyphens (hx-post). #}
+{% macro btn(text, variant="primary", type="button", href=None) %}
+{% if href %}
+<a href="{{ href }}" class="btn btn-{{ variant }}"{% for key, value in kwargs.items() %} {{ key | replace('_', '-') }}="{{ value }}"{% endfor %}>{{ text }}</a>
+{% else %}
+<button type="{{ type }}" class="btn btn-{{ variant }}"{% for key, value in kwargs.items() %} {{ key | replace('_', '-') }}="{{ value }}"{% endfor %}>{{ text }}</button>
+{% endif %}
+{% endmacro %}

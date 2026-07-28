@@ -73,6 +73,89 @@ body {
     background: #0052a3;
 }
 
+.btn-secondary {
+    background: #e0e0e0;
+    color: #1a1a1a;
+}
+
+.btn-secondary:hover {
+    background: #c9c9c9;
+}
+
+.btn-danger {
+    background: #cc0000;
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: #a30000;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.form-group input {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+}
+
+.form-group.has-error input {
+    border-color: #cc0000;
+}
+
+.form-group.has-error input:focus {
+    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+}
+
+.error-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: #cc0000;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+}
+
+.badge-admin {
+    background: #e8f0fe;
+    color: #1a56db;
+}
+
+.badge-owner {
+    background: #fef3c7;
+    color: #92400e;
+}
+
 /* Login */
 .login-container {
     text-align: center;

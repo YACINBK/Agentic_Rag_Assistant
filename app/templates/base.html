@@ -6,6 +6,7 @@
     <title>{% block title %}Whitecape Knowledge Assistant{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/base.css">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
     {% block head %}{% endblock %}
 </head>
 <body hx-boost="true">
@@ -21,5 +22,6 @@
     <main class="content">
         {% block content %}{% endblock %}
     </main>
+    {% block footer %}{% endblock %}
 </body>
 </html>

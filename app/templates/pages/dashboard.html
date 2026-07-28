@@ -1,11 +1,16 @@
 {% extends "base.html" %}
+{% from "macros/buttons.html" import btn %}
 
 {% block title %}Dashboard — Whitecape Knowledge Assistant{% endblock %}
 
 {% block content %}
 <div class="dashboard">
     <h1>Welcome, {{ user.email }}</h1>
-    <p>Role: {{ user.role }}{% if user.is_admin %} (Admin){% endif %}{% if user.is_owner %} (Owner){% endif %}</p>
-    <a href="/search" class="btn btn-primary">Search Knowledge Base</a>
+    <p>
+        Role: {{ user.role }}
+        {% if user.is_admin %}<span class="badge badge-admin">Admin</span>{% endif %}
+        {% if user.is_owner %}<span class="badge badge-owner">Owner</span>{% endif %}
+    </p>
+    {{ btn("Search Knowledge Base", href="/search") }}
 </div>
 {% endblock %}
