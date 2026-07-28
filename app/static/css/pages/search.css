@@ -1,0 +1,89 @@
+/* Search page styles — loaded via {% block head %} in pages/search.html */
+
+/* Layout */
+.search-page h1 {
+    margin-bottom: 1.5rem;
+}
+
+.search-bar {
+    max-width: 640px;
+    margin-bottom: 2rem;
+}
+
+/* Message bubbles */
+.message-bubble,
+.query-bubble {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    max-width: 80%;
+}
+
+.message-user {
+    background: #0066cc;
+    color: #fff;
+    margin-left: auto;
+}
+
+.message-user .query-text {
+    margin: 0;
+}
+
+.message-assistant {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    margin-right: auto;
+}
+
+.message-content {
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+/* Sources */
+.message-sources {
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #eee;
+}
+
+.sources-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sources-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.source-card {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #444;
+}
+
+/* Progress indicator */
+.progress {
+    padding: 0.75rem 1rem;
+    color: #666;
+    font-style: italic;
+}
+
+/* Error container (reused by SSE error events) */
+.error-container {
+    padding: 0.75rem 1rem;
+    background: #fff5f5;
+    border: 1px solid #f5c6c6;
+    border-radius: 8px;
+    color: #a30000;
+}

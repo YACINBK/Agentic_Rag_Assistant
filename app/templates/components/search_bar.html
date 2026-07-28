@@ -1,0 +1,7 @@
+{% from "macros/forms.html" import form_field %}
+{% from "macros/buttons.html" import btn %}
+
+<form hx-post="/search/" hx-target="#search-results" hx-swap="innerHTML" class="search-bar">
+    {{ form_field("query", "Ask a question", placeholder="e.g. What is the leave policy?", required=True) }}
+    {{ btn("Search", type="submit") }}
+</form>

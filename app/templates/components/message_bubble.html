@@ -1,0 +1,13 @@
+<div class="message-bubble message-assistant">
+    <div class="message-content">{{ answer }}</div>
+    {% if sources %}
+    <div class="message-sources">
+        <span class="sources-label">Sources:</span>
+        <div class="sources-list">
+            {% for source in sources %}
+            {% include "components/source_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>

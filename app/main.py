@@ -11,6 +11,7 @@ from app.core.logging import configure_logging, get_logger
 from app.core.models.base import async_session, engine
 from app.core.settings import settings
 from app.api.error_handlers import register_error_handlers
+from app.api.routes import search_router
 from app.services.auth import KeycloakAuthService, SESSION_COOKIE
 
 configure_logging()
@@ -44,6 +45,8 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+app.include_router(search_router)
 
 
 # --- Health ---
