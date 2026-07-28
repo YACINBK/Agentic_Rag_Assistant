@@ -93,6 +93,7 @@ rag_assistant/
 │   │
 │   ├── pipeline/
 │   │   ├── __init__.py
+│   │   ├── factory.py               # Composition root: build_pipeline_nodes + get_compiled_pipeline
 │   │   ├── graph.py                 # LangGraph StateGraph — wires all 9 nodes + conditional routing
 │   │   └── nodes/                   # One file per pipeline node (all implemented)
 │   │       ├── __init__.py
@@ -111,7 +112,8 @@ rag_assistant/
 │   │   ├── dependencies.py              # require_auth, require_admin, require_owner
 │   │   ├── error_handlers.py            # register_error_handlers() — client-aware AuthN/AuthZ responses
 │   │   └── routes/
-│   │       └── __init__.py
+│   │       ├── __init__.py              # Exports search_router
+│   │       └── search.py                # GET /search, POST /search, GET /search/stream (SSE)
 │   │
 │   ├── tasks/
 │   │   ├── __init__.py
@@ -120,19 +122,34 @@ rag_assistant/
 │   │   └── cache_cleanup.py         # TTL-based semantic cache purge (Celery beat)
 │   │
 │   ├── templates/
-│   │   ├── base.html                # Layout: nav, HTMX script, content block
-│   │   ├── pages/                   # Full-page templates (login, dashboard, ...)
-│   │   ├── partials/                # HTMX partial responses
-│   │   ├── components/              # Reusable Jinja2 include blocks
-│   │   └── macros/                  # Jinja2 macros
+│   │   ├── base.html                # Layout: nav, HTMX 2.0.4, SSE ext, blocks (head/content/footer)
+│   │   ├── pages/
+│   │   │   ├── login.html           # Keycloak sign-in (btn macro, no nav)
+│   │   │   ├── dashboard.html       # User info, badges, search link
+│   │   │   ├── search.html          # Search page (extends base, loads search.css)
+│   │   │   └── 403.html             # Forbidden page
+│   │   ├── partials/
+│   │   │   ├── search_page_content.html  # Search bar + results swap target
+│   │   │   ├── search_results.html       # SSE connection container (sse-swap divs)
+│   │   │   └── 403.html                  # HTMX-swappable forbidden fragment
+│   │   ├── components/
+│   │   │   ├── search_bar.html      # Reusable search form (form_field + btn macros)
+│   │   │   ├── message_bubble.html  # Answer bubble + source cards
+│   │   │   └── source_card.html     # Single source filename display
+│   │   └── macros/
+│   │       ├── forms.html           # form_field(name, label, type, error, required, placeholder)
+│   │       └── buttons.html         # btn(text, variant, type, href, **kwargs)
 │   │
 │   └── static/
-│       ├── css/base.css             # Base stylesheet
+│       ├── css/
+│       │   ├── base.css             # Base styles, form fields, buttons, badges
+│       │   └── pages/
+│       │       └── search.css       # Message bubbles, source cards, progress, errors
 │       └── js/                      # Client-side JS (empty, ready for use)
 │
 ├── tests/
 │   ├── conftest.py                  # Shared fixtures: state factories, mock services, auth mocks
-│   ├── unit/                        # One test module per node + auth modules (12 modules)
+│   ├── unit/                        # One test module per node + auth + frontend (17 modules)
 │   └── integration/
 │       ├── test_graph.py            # End-to-end pipeline routing tests
 │       └── test_auth_flow.py        # Full OIDC chain: route → dependency → service → error handler
@@ -298,8 +315,8 @@ developer's machine to drive the Planner → Generator → Evaluator cycle.
 | `log.md` | Append-only — Evaluator writes PASS/FAIL per node per run |
 | `tests/conftest.py` | Shared fixtures — state factories, mock patterns for all nodes (tracked — it is test code) |
 
-**Current status:** Phase 3a (auth hardening) complete — all 4 auth modules verified,
-83 tests passing (57 pipeline + 26 auth). Next: Phase 3b (frontend).
+**Current status:** Phase 3b (frontend) complete — all 4 frontend modules verified,
+112 tests passing (57 pipeline + 26 auth + 29 frontend). Next: Phase 4 (ingestion + admin).
 See `CHANGELOG.md` for the chronological build log.
 
 ---
@@ -328,4 +345,44 @@ Code + PKCE, server-side sessions in Redis, HTTP-only cookie. **26 tests pass (2
 - Lazy Keycloak sync: user row created/updated in PostgreSQL on first login, not via webhook.
 
 **Per-module reference:** `docs/auth/` contains one detailed document per module plus an overview — see `docs/auth/README.md`.
+
+---
+
+## 11. Frontend layer — Phase 3b
+
+The full HTMX + Jinja2 frontend is implemented and wired. Server-side rendering,
+SSE streaming for pipeline output, buffered-answer discipline (answer never
+streamed before the faithfulness verdict). **29 tests pass (8 macros + 7 pages + 8 route + 6 templates).**
+
+| Module | File | What |
+|---|---|---|
+| Macros + base | `app/templates/macros/`, `app/templates/base.html` | `form_field` + `btn` macros; HTMX SSE extension; block head/footer for extensibility |
+| Base pages | `app/templates/pages/login.html`, `app/templates/pages/dashboard.html` | Login (Keycloak button, no nav); dashboard (user info, admin/owner badges, search link) |
+| Search route | `app/api/routes/search.py`, `app/pipeline/factory.py` | GET/POST /search, GET /search/stream (SSE); composition root for all 9 pipeline nodes |
+| Search templates | `app/templates/pages/search.html`, `partials/`, `components/`, `static/css/pages/search.css` | Search page, SSE connection partial, message bubble, source cards |
+
+**SSE event protocol:**
+- `progress` → HTML progress indicator (immediately)
+- `answer` → rendered message_bubble.html (ONLY if `is_faithful=True`)
+- `error` → HTML error fragment (unfaithful answer or pipeline exception)
+- `done` → always last (signals client to close)
+
+**Buffered answer discipline (CLAUDE.md §12):** The pipeline's `ainvoke()` runs to
+completion. The generator writes the full answer into state. The faithfulness node
+verifies it. Only then does the SSE endpoint emit the answer event. If unfaithful,
+the answer is discarded and an error fallback is sent.
+
+**qid (query ID) pattern:** `POST /search` generates a UUID4 hex, stores the query
+in Redis under `query:{qid}` with 60s TTL, returns a partial with
+`sse-connect="/search/stream?qid={qid}"`. Avoids URL encoding long or special-character
+queries.
+
+**Pipeline factory (composition root):** `app/pipeline/factory.py` instantiates all
+service singletons (LiteLLM, OllamaEmbedder, QdrantVectorStore, TEIReranker) and
+injects them into the 9 nodes. `get_compiled_pipeline(settings)` returns the compiled
+LangGraph StateGraph, ready for `ainvoke()`. Single wiring point — routes never
+instantiate nodes directly.
+
+**Per-module reference:** `docs/frontend/` contains one detailed document per module
+plus an overview — see `docs/frontend/README.md`.
 

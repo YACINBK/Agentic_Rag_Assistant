@@ -4,6 +4,62 @@ All notable changes to the Whitecape Knowledge Assistant project.
 
 ---
 
+## [2026-07-28] — Phase 3b: Frontend (Search Page + SSE Streaming)
+
+**Scope:** Full search frontend — macros, base pages, search route + SSE streaming,
+search templates + components. All 4 modules verified via contract-driven loop
+engineering. 14 new tests, all PASS. Total: 112 tests (57 pipeline + 26 auth + 29 frontend).
+
+**New files:**
+
+| File | What |
+|---|---|
+| `app/api/routes/search.py` | `search_router`: GET /search, POST /search, GET /search/stream (SSE) |
+| `app/api/routes/__init__.py` | Router exports |
+| `app/pipeline/factory.py` | Composition root — instantiates all 9 nodes with services, compiles graph |
+| `app/templates/macros/forms.html` | `form_field` macro — label, input, error state, required, placeholder |
+| `app/templates/macros/buttons.html` | `btn` macro — button/anchor, variants, HTMX attribute passthrough |
+| `app/templates/pages/search.html` | Search page (extends base, loads search.css) |
+| `app/templates/partials/search_page_content.html` | Search bar + results swap target |
+| `app/templates/partials/search_results.html` | SSE connection container with sse-swap divs |
+| `app/templates/components/search_bar.html` | Reusable search form (form_field + btn macros) |
+| `app/templates/components/message_bubble.html` | Answer bubble + source cards |
+| `app/templates/components/source_card.html` | Single source filename display |
+| `app/static/css/pages/search.css` | Search page styles — bubbles, sources, progress, errors |
+| `tests/unit/test_frontend_macros.py` | 8 tests — macros + base.html structure |
+| `tests/unit/test_frontend_base_pages.py` | 7 tests — login + dashboard pages |
+| `tests/unit/test_search_route.py` | 8 tests — search endpoints + SSE stream |
+| `tests/unit/test_search_frontend.py` | 6 tests — search templates + components |
+| `docs/frontend/README.md` | Frontend layer overview — SSE architecture, template hierarchy |
+| `docs/frontend/frontend_macros.md` | Reference doc — macros + base template |
+| `docs/frontend/frontend_base_pages.md` | Reference doc — login + dashboard pages |
+| `docs/frontend/search_route.md` | Reference doc — search endpoints + pipeline factory |
+| `docs/frontend/search_frontend.md` | Reference doc — search templates + CSS |
+
+**Modified files:**
+
+| File | Change |
+|---|---|
+| `app/templates/base.html` | Added HTMX SSE extension script, `{% block head %}`, `{% block footer %}` |
+| `app/templates/pages/login.html` | Uses btn macro, company branding |
+| `app/templates/pages/dashboard.html` | Uses macros, admin/owner badges, search link |
+| `app/static/css/base.css` | Form styles, button variants, badge styles |
+| `app/main.py` | Added search_router, fixed TemplateResponse signatures (Starlette 1.3.1), added error_handlers import |
+| `tests/conftest.py` | Added pipeline state factories, authenticated Redis helper |
+
+**Key design decisions:**
+- Buffered answer + faithfulness check before SSE (§12 hard constraint)
+- HTML fragments over SSE (not JSON) — HTMX sse-swap expects HTML
+- Query stored in Redis via qid pattern — avoids URL encoding long queries
+- Pipeline factory as composition root — single wiring point for all 9 nodes
+
+**Bug fixed:** RetryNode in factory.py was missing `llm` parameter — would crash at
+runtime when building the real pipeline. Tests couldn't catch it (pipeline fully mocked).
+
+**All 112 tests pass (57 pipeline + 26 auth + 29 frontend).**
+
+---
+
 ## [2026-07-27] — Phase 3a: Auth Hardening + Middleware
 
 **Scope:** Full auth layer — dependency injection, error handling, service tests, integration tests.
