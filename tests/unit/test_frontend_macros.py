@@ -26,7 +26,6 @@ def _render_macro(template_path: str, macro_name: str, *args, **kwargs) -> str:
 
 
 class TestFormFieldMacro:
-
     def test_form_field_renders_label_and_input(self) -> None:
         html = _render_macro(
             "macros/forms.html", "form_field", "email", "Email Address", type="email"
@@ -51,7 +50,6 @@ class TestFormFieldMacro:
 
 
 class TestBtnMacro:
-
     def test_btn_primary_variant(self) -> None:
         html = _render_macro("macros/buttons.html", "btn", "Submit", variant="primary")
 
@@ -74,7 +72,6 @@ class TestBtnMacro:
 
 
 class TestBaseHtml:
-
     def test_base_html_loads_sse_extension(self) -> None:
         session = make_user_session()
         redis = MockRedis({"session:abc123": serialize_user_session(session)})
@@ -84,9 +81,7 @@ class TestBaseHtml:
 
         @app.get("/")
         async def index(request: Request, user: UserSession = Depends(require_auth)):
-            return _templates.TemplateResponse(
-                request, "pages/dashboard.html", {"user": user}
-            )
+            return _templates.TemplateResponse(request, "pages/dashboard.html", {"user": user})
 
         client = TestClient(app)
         client.cookies.set("session_id", "abc123")
@@ -95,7 +90,9 @@ class TestBaseHtml:
 
         assert response.status_code == 200
         assert "<script" in response.text
-        assert "htmx.org/dist/ext/sse" in response.text
+        # htmx 2.x ships extensions as separate packages — the htmx 1.x path
+        # (htmx.org/dist/ext/sse.js) 404s and the extension never registers.
+        assert "htmx-ext-sse" in response.text
 
     def test_base_html_has_head_block(self) -> None:
         env = Environment(

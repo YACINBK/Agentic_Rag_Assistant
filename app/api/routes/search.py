@@ -55,9 +55,7 @@ async def search_submit(
         return JSONResponse(status_code=400, content={"detail": "Query cannot be empty"})
 
     qid = uuid.uuid4().hex
-    await request.app.state.redis.setex(
-        f"{QUERY_PREFIX}{qid}", QUERY_TTL_SECONDS, cleaned
-    )
+    await request.app.state.redis.setex(f"{QUERY_PREFIX}{qid}", QUERY_TTL_SECONDS, cleaned)
 
     return templates.TemplateResponse(
         request,
@@ -114,11 +112,11 @@ async def search_stream(
         if not answer and result.get("is_faithful") and result.get("generated_answer"):
             answer = result["generated_answer"]
             sources = sorted(
-                {
-                    c.get("original_filename", "unknown")
-                    for c in result.get("reranked_chunks", [])
-                }
+                {c.get("original_filename", "unknown") for c in result.get("reranked_chunks", [])}
             )
+
+        # Clear the progress indicator now that the pipeline has finished.
+        yield {"event": "progress", "data": "<div></div>"}
 
         if answer:
             html = templates.get_template("components/message_bubble.html").render(
