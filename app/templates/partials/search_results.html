@@ -1,11 +1,11 @@
 <div class="search-results"
      hx-ext="sse"
-     sse-connect="/search/stream?qid={{ qid }}">
+     sse-connect="/search/stream?qid={{ qid }}"
+     sse-close="done">
     <div class="query-bubble message-user">
         <p class="query-text">{{ query }}</p>
     </div>
     <div sse-swap="progress"></div>
     <div sse-swap="answer"></div>
     <div sse-swap="error"></div>
-    <div sse-swap="done"></div>
 </div>
