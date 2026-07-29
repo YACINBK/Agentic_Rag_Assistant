@@ -4,6 +4,47 @@ All notable changes to the Whitecape Knowledge Assistant project.
 
 ---
 
+## [2026-07-29] — Fix: SSE streaming end-to-end
+
+**Scope:** First manual browser test of the search page surfaced four client-side
+defects that the unit suite structurally could not catch — it asserts server-rendered
+markup, not that external assets resolve or that the SSE connection lifecycle behaves.
+All fixed. Test suite still green (100 unit tests).
+
+**Modified files:**
+
+| File | Change |
+|---|---|
+| `app/templates/base.html` | Load `htmx-ext-sse@2.2.2/sse.js` instead of the htmx 1.x path `htmx.org/dist/ext/sse.js` |
+| `app/templates/partials/search_results.html` | Add `sse-close="done"`; remove `<div sse-swap="done">` |
+| `app/api/routes/search.py` | Emit a final empty `progress` event before `answer`/`error` |
+| `tests/unit/test_frontend_macros.py` | Assert `htmx-ext-sse` — the test previously pinned the broken URL |
+
+**Defects:**
+
+1. **SSE never connected.** `base.html` loaded the htmx **1.x** extension path while
+   htmx **2.0.4** is in use. htmx 2 ships extensions as separate npm packages, so
+   `htmx.org/dist/ext/sse.js` 404s, the `sse` extension never registers, and
+   `hx-ext="sse"` is silently inert. The query bubble rendered (plain HTML from the
+   POST partial) and nothing streamed.
+2. **Reconnect storm.** `EventSource` auto-reconnects when a stream closes. The server
+   correctly closed after `done`; the browser treated that as a drop and reconnected,
+   re-running the stream each time. Once the 60s qid TTL lapsed, every reconnect
+   emitted "Query expired. Please search again." indefinitely. Fixed with
+   `sse-close="done"`.
+3. **`TypeError: Cannot read properties of undefined (reading 'replace')`.**
+   `<div sse-swap="done">` tried to swap the `done` event's empty payload. `done` is a
+   control signal, not content — the swap target was removed.
+4. **Stale progress indicator.** "Searching documents…" persisted below the answer.
+
+**Note on assertion quality:** assertion 5 of `contracts/frontend_macros.md` ("base.html
+loads HTMX SSE extension via `<script>` tag") was satisfied by a tag pointing at a
+404ing URL. Future contracts covering external assets must pin the expected
+package/version, and SSE contracts need explicit connection-lifecycle assertions
+(opens → delivers → closes → does not reconnect).
+
+---
+
 ## [2026-07-28] — Phase 3b: Frontend (Search Page + SSE Streaming)
 
 **Scope:** Full search frontend — macros, base pages, search route + SSE streaming,
