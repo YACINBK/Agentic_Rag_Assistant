@@ -90,4 +90,4 @@ keycloak, ollama, reranker). The backend serves UI + API + SSE on port 8000.
 - **Phase 1 — Foundation:** core ABCs, ORM models, service skeletons, diagrams, Docker Compose. ✅
 - **Phase 2 — Pipeline:** all 9 nodes + graph integration, 57 tests passing. ✅
 - **Phase 3 — Auth + Frontend:** ✅.
-- **Phase 4 — Ingestion + Admin:** planned.
+- **Phase 4 — Ingestion + Admin:** In Progress.
