@@ -48,19 +48,44 @@ configured in environment or init script). Owner status is not manageable
 through the application UI — it cannot be granted or revoked by any user,
 including other owners. Owner inherits all Admin capabilities automatically.
 
+**Owner invariant — `is_owner = true` implies `is_admin = true`.**
+"Inherits all Admin capabilities" is enforced by data, not by branching. Every
+`is_admin` check in the codebase reads the flag alone; no check anywhere is
+written as `is_admin or is_owner`. This keeps the §5 retrieval filter to a single
+privilege condition instead of two, and means a missed `or is_owner` cannot
+silently lock the Owner out of an admin operation.
+
+Enforced at two levels:
+- **DB:** `CHECK (NOT is_owner OR is_admin)` on the `user` table (§10).
+- **App:** the Owner seed script and any code path setting `is_owner = true`
+  sets `is_admin = true` in the same statement.
+
+**Reserved role names.** `Role.name` creation rejects `all`, `admin`, and
+`owner` case-insensitively. `all` is the wildcard sentinel in
+`allowed_roles`; `admin` and `owner` are flags, not roles. A Role row with any
+of these names would silently corrupt the §5 retrieval filter — this is why the
+guard lives at Role creation and not only in the ingestion path.
+
 | Concept | What it controls |
 |---|---|
-| Primary role (from Role table) | Retrieval scope (Qdrant filter), answer framing (role persona prompt) |
-| is_admin flag | Upload, delete, role management, audit log access, system config, re-ingestion |
-| is_owner flag | Admin assignment/revocation, document category restrictions, global ingestion config override |
+| Primary role (from Role table) | Retrieval scope — `allowed_roles` dimension of the Qdrant filter; answer framing (role persona prompt) |
+| is_admin flag | Retrieval scope — `admin_only` dimension of the Qdrant filter; upload, delete, role management, audit log access, system config, re-ingestion |
+| is_owner flag | Admin assignment/revocation, document category restriction **policy**, global ingestion config override |
 
 | Admin flag | Additional capabilities (on top of primary role) |
 |---|---|
-| is_admin = true | Upload documents, delete documents, manage user roles (primary role only), view full organizational audit log, view system metrics, trigger manual re-ingestion, configure system settings |
+| is_admin = true | See `admin_only = true` chunks in retrieval, upload documents, delete documents, manage user roles (primary role only), view full organizational audit log, view system metrics, trigger manual re-ingestion, configure system settings |
 
 | Owner flag | Additional capabilities (on top of Admin) |
 |---|---|
-| is_owner = true | Assign/revoke is_admin flag on any user, assign document category access restrictions, override ingestion configuration globally, view all Admin accounts and their active status, view Admin assignment history |
+| is_owner = true | Assign/revoke is_admin flag on any user, configure which document categories default to restricted, override ingestion configuration globally, view all Admin accounts and their active status, view Admin assignment history |
+
+**Owner's "document category restrictions" is policy configuration, not a
+retrieval tier.** It sets the default `Document.restricted` value per category at
+ingestion time — which then becomes the chunk's `admin_only` payload field. It
+adds no third dimension to the §5 filter and requires no schema change beyond
+the existing `Document.restricted` column. There are exactly two privilege
+tiers: admin and non-admin.
 
 **Non-negotiable:**
 - Keycloak authentication is required for every action without exception.
@@ -71,6 +96,8 @@ including other owners. Owner inherits all Admin capabilities automatically.
 - Owner is additive — it never overrides or replaces the primary role or admin flag.
 - Owner is seeded at deployment. Not assignable through the UI. Not manageable by Admin.
 - Admin cannot assign or revoke is_admin — only Owner can.
+- `is_owner = true` always implies `is_admin = true`. Never check `is_admin or is_owner`.
+- `Role.name` may never be `all`, `admin`, or `owner` (case-insensitive).
 - Role enforcement happens at two layers — see Section 5.
 - No role logic may hardcode role names. Filter by user's role string, not by `if role == "developer"`.
 
@@ -86,8 +113,8 @@ including other owners. Owner inherits all Admin capabilities automatically.
 | Auth | Keycloak 24+ — OIDC Authorization Code, session cookie | Final |
 | Agent orchestration | LangGraph StateGraph | Final |
 | Model abstraction | LiteLLM — all LLM calls go through this | Final |
-| Embeddings | BGE-M3 (self-hosted via Ollama) | Final |
-| Vector store | Qdrant — hybrid search | Final |
+| Embeddings | BGE-M3 (self-hosted via Ollama) — **dense only, 1024-d**. Ollama does not expose BGE-M3's sparse/ColBERT outputs. | Final |
+| Vector store | Qdrant — **dense-only for MVP** (size 1024, cosine). Hybrid is post-MVP and needs a separate sparse source — see below. | Final |
 | Reranker | bge-reranker-v2-m3 via Hugging Face TEI (CPU) | Final |
 | Relational DB | PostgreSQL | Final |
 | Async task queue | Celery + Redis | Final |
@@ -98,6 +125,38 @@ including other owners. Owner inherits all Admin capabilities automatically.
 | Local model runtime | Ollama | Final |
 | Session management | Server-side sessions (Redis-backed), HTTP-only cookie | Final |
 | CSRF protection | Starlette CSRF middleware, token in forms | Final |
+
+### The dense/sparse seam — decided, not deferred by accident
+
+The original "BGE-M3 + Qdrant hybrid search" pairing assumed BGE-M3's *native*
+sparse (lexical) weights would come back alongside the dense vector. **They do
+not.** Ollama's `bge-m3` returns the dense 1024-d vector only — the sparse and
+ColBERT/multi-vector heads are not exposed through Ollama's embedding API.
+
+Consequences, all of them decisions rather than surprises:
+
+- `EMBEDDING_DIM = 1024` describes the **dense side only**. The Qdrant
+  `documents` collection is created with a single dense vector, size 1024,
+  distance cosine (M2).
+- **MVP ships dense-only retrieval.** This is sufficient — it is what the
+  reranker (§6 node 4) then re-scores, and the cross-encoder recovers much of
+  what lexical matching would have caught.
+- **Hybrid is not cancelled, it is re-sourced.** Sparse must come from a
+  different local producer than Ollama: either BGE-M3's own sparse weights via
+  FlagEmbedding/FastEmbed in-process, or an independent sparse model
+  (FastEmbed BM25 or SPLADE) running as the sparse channel while Ollama keeps
+  supplying dense. Qdrant declares sparse vectors separately and they carry no
+  fixed dimension, so adding the sparse channel later is a collection-level
+  change plus an indexer change — it does not invalidate the dense vectors
+  already written.
+- **The decision owner is the indexer contract (M5).** It must state which
+  sparse source it targets, or state explicitly that it writes dense-only and
+  name the follow-up. Silence there is what would turn this into a surprise.
+
+This matters most for the Ask&Go corpus specifically: it is French UI
+documentation full of exact-token identifiers (screen names, menu labels, field
+names) — precisely the content where lexical matching earns its keep and pure
+dense retrieval is weakest.
 
 ---
 
@@ -228,12 +287,57 @@ async def rerank(query: str, passages: list[str]) -> list[float]:
 Applied inside node 3 on every search call. The LLM physically never
 sees chunks the user's role cannot access. Not bypassable by prompt injection.
 
+The filter has **two independent dimensions**, ANDed together:
+
+| Dimension | Payload field | Answers |
+|---|---|---|
+| Subject-matter scope | `allowed_roles: list[str]` | *Whose job is this document about?* |
+| Privilege tier | `admin_only: bool` | *How much trust does reading it require?* |
+
+These are orthogonal and must never be collapsed into one field. `allowed_roles`
+contains **only** Role-table names or the literal `"all"` — never `"admin"`,
+never `"owner"`. Admin-ness is a flag (§2), not a role, so it can never appear
+in `user_role` and a chunk tagged `allowed_roles=["admin"]` would match no user
+at all.
+
 ```python
-models.FieldCondition(
-    key="allowed_roles",
-    match=models.MatchAny(any=[user_role, "all"])
-)
+must = [
+    models.FieldCondition(
+        key="allowed_roles",
+        match=models.MatchAny(any=[user_role, "all"]),
+    )
+]
+
+# Privilege condition is APPENDED, not substituted. Admins get a strictly
+# wider result set — they never lose access to non-restricted content.
+if not user_is_admin:
+    must.append(
+        models.FieldCondition(
+            key="admin_only",
+            match=models.MatchValue(value=False),
+        )
+    )
+
+client.search(query_filter=models.Filter(must=must), ...)
 ```
+
+`is_admin` reaches node 3 through `PipelineState.user_is_admin`, populated at
+pipeline entry from the session. Owner needs no separate condition: `is_owner`
+implies `is_admin` (§2 invariant), so Owner is already covered by the admin branch.
+
+**Why the condition is omitted rather than inverted for admins:** an admin must
+see both restricted and unrestricted chunks. Filtering `admin_only == True` for
+admins would hide ordinary documents from them.
+
+**Why this is never done after retrieval** — two reasons, both independently
+sufficient:
+
+1. **Exposure.** By the time results are back in Python, the reranker has scored
+   the restricted passages and the generator's context window is being built from
+   them. Dropping them late does not undo that they were read.
+2. **Silent quality loss.** `top_k` is a fixed budget. If 4 of a non-admin's top
+   10 are restricted, post-filtering leaves a 6-chunk answer with no error and no
+   log line — the user gets a worse answer and nothing indicates why.
 
 ### Layer 2 — Role persona in generation prompt (UX layer only)
 
@@ -372,12 +476,31 @@ on it synchronously, so the cost is effectively zero.
     "document_id": str,           # UUID, FK to PostgreSQL Document
     "original_filename": str,
     "category": str,              # technical|quality|projects|company
-    "allowed_roles": list[str],   # ["all"] or ["admin"] or specific roles
+    "allowed_roles": list[str],   # ["all"] or Role.name values — NEVER "admin"/"owner"
+    "admin_only": bool,           # mirrors Document.restricted — privilege tier
     "page_number": int,
     "chunk_index": int,
     "doc_hash": str               # SHA256
 }
 ```
+
+`allowed_roles` and `admin_only` are the two dimensions of the §5 Layer 1 filter
+and are orthogonal. `allowed_roles` scopes by subject matter; `admin_only` scopes
+by privilege. A chunk may be `allowed_roles=["developer"], admin_only=True` —
+visible only to Developers who are also admins.
+
+**`allowed_roles` may contain only:**
+- the literal `"all"`, or
+- values that exist as `Role.name` in PostgreSQL.
+
+It must never contain `"admin"` or `"owner"` — those are flags, not roles (§2),
+and never appear in `user_role`. A chunk tagged with them matches no user.
+The Role table enforces this at the source: `Role.name` creation rejects
+`all`, `admin`, and `owner` case-insensitively as reserved words.
+
+`admin_only` is set from `Document.restricted` at ingestion time. Both
+`allowed_roles` and `admin_only` require Qdrant payload indexes — an unindexed
+filter field means a full collection scan on every query.
 
 **Redis roles:**
 - Message broker: FastAPI → Redis → Celery (AMQP)
@@ -484,6 +607,11 @@ created_at      timestamp
 
 Seed values: `developer`, `qa_engineer`. New roles are INSERTs, not migrations.
 
+**Reserved names — rejected at Role creation, case-insensitively:**
+`all`, `admin`, `owner`. See §2. `all` is the `allowed_roles` wildcard sentinel;
+the other two are flags. A Role row with any of these names silently corrupts the
+§5 retrieval filter.
+
 ### User
 ```
 id              UUID PK
@@ -501,19 +629,33 @@ last_login      timestamp
 CREATE UNIQUE INDEX idx_single_owner ON "user" (is_owner) WHERE is_owner = true;
 ```
 
+**Check constraint — enforces the §2 Owner invariant at DB level:**
+```sql
+ALTER TABLE "user" ADD CONSTRAINT ck_owner_implies_admin
+    CHECK (NOT is_owner OR is_admin);
+```
+
+This is a DB constraint, not only an app-level rule, because the Owner seed
+script writes `is_owner` directly and would otherwise be the one path that
+bypasses app-level enforcement.
+
 ### Document
 ```
 id              UUID PK
 source_path     string
 original_filename string
 category        enum(technical, quality, projects, company)
-restricted      boolean default false
+restricted      boolean default false     # → chunk payload admin_only (§5, §8)
 doc_hash        SHA256 string unique
 uploaded_by     FK → User.id
 last_ingested_at timestamp
 chunk_count     integer
 ingestion_status enum(pending, running, done, failed)
 ```
+
+`restricted` is the source of truth for the chunk payload's `admin_only` field.
+Changing it requires re-ingestion — the payload is written at ingestion time and
+is not updated in place.
 
 ### AuditLog — append-only. No UPDATE. No DELETE. Ever.
 ```
@@ -543,6 +685,10 @@ resolution_note text nullable
 **Schema decisions — do not change without explicit instruction:**
 - Roles are a lookup table, not an enum. Adding a role is an INSERT + Keycloak config.
   No code may hardcode role names — always resolve from the Role table or JWT claims.
+- `Role.name` rejects the reserved words `all`, `admin`, `owner` (case-insensitive).
+- `is_owner` implies `is_admin`, enforced by `ck_owner_implies_admin` at DB level.
+- `Document.restricted` is the only source of the chunk payload `admin_only` field.
+  There are exactly two privilege tiers. No third tier, no per-category tier table.
 - chunks_used is JSON, not a junction table. MVP simplification. Queryable in PostgreSQL.
 - EscalationEvent is a separate table. Most AuditLog rows never escalate.
 - AuditLog is append-only. Compliance requirement.
@@ -731,8 +877,17 @@ All test cases import state factories and mock fixtures from conftest.py.
   faithfulness checker runs on the complete answer, SSE only begins after FAITHFUL.
 - All models run local via Ollama. No external API calls for LLM inference.
 - All LLM calls go through LiteLLM. Do not import anthropic or openai directly in nodes.
-- Qdrant role filter is a hard security boundary. Applied at query time inside node 3.
+- The Qdrant filter is a hard security boundary. Applied at query time inside node 3.
   Never filter returned results in Python after the fact.
+- The filter has two independent dimensions, ANDed in one `must` list (§5):
+  `allowed_roles` (`MatchAny([user_role, "all"])`) for subject-matter scope, and
+  `admin_only` (`MatchValue(False)`) for privilege tier. Never collapse them into one field.
+- The `admin_only` condition is APPENDED for non-admins, never inverted for admins.
+  Admins must see restricted AND unrestricted chunks.
+- `allowed_roles` may only contain the literal `"all"` or values that exist as `Role.name`.
+  Never `"admin"`, never `"owner"` — privilege is `admin_only`, not a pseudo-role.
+- `is_owner = true` always implies `is_admin = true`. Never check `is_admin or is_owner`.
+- `Role.name` may never be `all`, `admin`, or `owner` (case-insensitive).
 - Role enforcement must never rely on prompt alone.
 - AuditLog is append-only. No UPDATE. No DELETE. Ever.
 - chunks_used stays as JSON array for MVP. Do not normalize prematurely.

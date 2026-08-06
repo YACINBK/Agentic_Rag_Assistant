@@ -52,4 +52,9 @@ def build_pipeline_nodes(settings: Settings) -> dict[str, BaseNode]:
 
 def get_compiled_pipeline(settings: Settings) -> CompiledStateGraph:
     """Build and compile the full pipeline graph. Ready for ainvoke()."""
+    # DEV-ONLY: bypass all model services with a canned answer. Never set in prod.
+    if getattr(settings, "DEV_FAKE_PIPELINE", False):
+        from app.pipeline.dev_fake import get_fake_pipeline
+
+        return get_fake_pipeline()
     return build_pipeline(build_pipeline_nodes(settings))

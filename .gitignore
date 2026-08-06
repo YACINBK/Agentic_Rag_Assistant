@@ -51,9 +51,20 @@ feature_list.json
 progress.md
 log.md
 
-# Alembic auto-generated
-alembic/versions/*.py
-!alembic/versions/.gitkeep
+# Alembic
+# alembic/versions/*.py is deliberately NOT ignored. Migrations are schema
+# version history, not build output — a fresh clone with no versions/ has no
+# schema, and `alembic upgrade head` silently does nothing. Autogenerate writes
+# them, but they are hand-reviewed and committed like any other source file.
+alembic/__pycache__/
+
+# Local dev scaffolding — flag-gated, never committed (settings.DEV_MODE /
+# DEV_FAKE_PIPELINE, both default False). Every reference to these lives inside a
+# flag branch, so the production path is byte-identical when the flags are unset
+# and a checkout without these files runs normally.
+app/api/routes/dev.py
+app/pipeline/dev_fake.py
+scripts/dev_seed_session.py
 
 # Diagrams backup only (diags/ is committed)
 diags_backup/
@@ -69,4 +80,10 @@ README_status.md
 *.db
 *.sqlite
 *.sqlite3
+
+# Source corpora — kept locally, never committed.
+# askgo-621x-fr.html is a 140MB BookStack export (mostly base64 images); GitHub
+# rejects blobs over 100MB, and history rewriting is the only way back out.
+# The corpus is an input to ingestion, not a project deliverable.
+/*.html
 

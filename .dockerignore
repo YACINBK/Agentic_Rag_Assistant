@@ -1,0 +1,40 @@
+# Host-side overrides — localhost endpoints that would be wrong inside a container.
+# Compose passes env_file: .env as real environment variables, which outrank any
+# dotenv file, so this is defence in depth rather than the only guard.
+.env.local
+.env
+
+# Virtual environments — never belong in the image
+.venv/
+venv/
+env/
+
+# VCS and build cruft
+.git/
+.gitignore
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Loop engineering process tooling — not deliverable
+contracts/
+reviews/
+test_results/
+feature_list.json
+progress.md
+log.md
+
+# Local corpora / large artifacts — root level only.
+# NOT a bare *.html: that would exclude app/templates/, which is baked into
+# the image (compose bind-mounts it for dev, but production serves from the image).
+/*.html
+*.db
+*.sqlite
+*.sqlite3

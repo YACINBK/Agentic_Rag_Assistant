@@ -39,6 +39,7 @@ def make_state(**overrides) -> PipelineState:
         "user_id": str(uuid.uuid4()),
         "user_role": "employee",
         "user_email": "test@whitecape.fr",
+        "user_is_admin": False,
     }
     defaults.update(overrides)
     return defaults
@@ -118,6 +119,7 @@ class MockVectorStore(BaseVectorStore):
         collection: str,
         query_vector: list[float],
         allowed_roles: list[str],
+        user_is_admin: bool,
         limit: int = 10,
     ) -> list[ChunkPayload]:
         self.search_calls.append(
@@ -126,6 +128,7 @@ class MockVectorStore(BaseVectorStore):
                 "query_vector": query_vector,
                 "allowed_roles": allowed_roles,
                 "limit": limit,
+                "user_is_admin": user_is_admin,
             }
         )
         return self._results[:limit]
@@ -408,3 +411,76 @@ def make_authenticated_redis(
         user = make_user_session()
     redis = MockRedis(data={f"session:{session_id}": serialize_user_session(user)})
     return redis, session_id
+
+
+# ---------------------------------------------------------------------------
+# Qdrant bootstrap mock (M2)
+# ---------------------------------------------------------------------------
+
+
+class _FakeCollectionInfo:
+    """Return value of get_collection — only .payload_schema is read by bootstrap."""
+
+    def __init__(self, payload_schema: dict | None):
+        self.payload_schema = payload_schema
+
+
+class FakeQdrantAdmin:
+    """Recording double for AsyncQdrantClient's admin surface (contract M2 line 91).
+
+    Records the full kwargs of every create_collection / create_payload_index call
+    because the assertions are about the *values* passed (size, distance, schema),
+    not merely that a call happened. Existing collections and their already-indexed
+    fields are test-settable. Simulates no Qdrant errors unless a test sets them.
+    """
+
+    def __init__(self) -> None:
+        # Test-settable state:
+        self.existing_collections: set[str] = set()
+        self.payload_schemas: dict[str, dict] = {}  # collection -> {field: schema}
+        # Recorded calls:
+        self.create_collection_calls: list[dict] = []
+        self.create_payload_index_calls: list[dict] = []
+        self.collection_exists_calls: list[str] = []
+        self.get_collection_calls: list[str] = []
+        self.delete_collection_calls: list[str] = []
+        self.delete_calls: list[dict] = []
+
+    async def collection_exists(self, collection_name: str) -> bool:
+        self.collection_exists_calls.append(collection_name)
+        return collection_name in self.existing_collections
+
+    async def get_collection(self, collection_name: str) -> _FakeCollectionInfo:
+        self.get_collection_calls.append(collection_name)
+        return _FakeCollectionInfo(self.payload_schemas.get(collection_name, {}))
+
+    async def create_collection(self, collection_name: str, vectors_config, **kwargs) -> None:
+        self.create_collection_calls.append(
+            {"collection_name": collection_name, "vectors_config": vectors_config, **kwargs}
+        )
+
+    async def create_payload_index(
+        self, collection_name: str, field_name: str, field_schema, **kwargs
+    ) -> None:
+        self.create_payload_index_calls.append(
+            {
+                "collection_name": collection_name,
+                "field_name": field_name,
+                "field_schema": field_schema,
+                **kwargs,
+            }
+        )
+
+    async def delete_collection(self, collection_name: str, **kwargs) -> None:
+        self.delete_collection_calls.append(collection_name)
+
+    async def delete(self, collection_name: str, **kwargs) -> None:
+        self.delete_calls.append({"collection_name": collection_name, **kwargs})
+
+    async def close(self) -> None:  # bootstrap only closes clients it owns; never here
+        pass
+
+
+@pytest.fixture
+def fake_qdrant_admin() -> FakeQdrantAdmin:
+    return FakeQdrantAdmin()

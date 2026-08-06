@@ -34,6 +34,7 @@ class PipelineState(TypedDict, total=False):
     user_id: str  # UUID from JWT
     user_role: str  # primary role name from JWT
     user_email: str
+    user_is_admin: bool  # is_admin flag from the session (§5 privilege tier)
 
     # --- Node 0: Cache Check ---
     cache_hit: bool

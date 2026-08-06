@@ -29,6 +29,7 @@ class QdrantSearchNode(BaseNode):
             raise RetrievalError("rewritten_query is missing or empty")
 
         user_role = state["user_role"]
+        user_is_admin = state["user_is_admin"]
         allowed_roles = [user_role, "all"]
 
         try:
@@ -41,6 +42,7 @@ class QdrantSearchNode(BaseNode):
                 collection=self._settings.QDRANT_COLLECTION,
                 query_vector=vector,
                 allowed_roles=allowed_roles,
+                user_is_admin=user_is_admin,
                 limit=self._settings.QDRANT_SEARCH_LIMIT,
             )
         except Exception as e:

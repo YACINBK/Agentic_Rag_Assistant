@@ -93,6 +93,7 @@ async def search_stream(
             "user_id": user.user_id,
             "user_role": user.role,
             "user_email": user.email,
+            "user_is_admin": user.is_admin,
         }
 
         try:

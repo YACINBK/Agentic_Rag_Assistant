@@ -20,9 +20,14 @@ class BaseVectorStore(ABC):
         collection: str,
         query_vector: list[float],
         allowed_roles: list[str],
+        user_is_admin: bool,
         limit: int = 10,
     ) -> list[ChunkPayload]:
-        """Semantic search with mandatory role filter."""
+        """Semantic search with the mandatory two-dimension security filter.
+
+        user_is_admin is a required argument with NO default (CLAUDE.md §5):
+        omitting it must raise TypeError, never silently guess a privilege tier.
+        """
         ...
 
     @abstractmethod

@@ -10,7 +10,14 @@ from app.core.models.base import Base
 from app.core.settings import settings
 
 # Import all models so Base.metadata sees them
-from app.core.models import Role, User, Document, AuditLog, EscalationEvent  # noqa: F401
+from app.core.models import (  # noqa: F401
+    Role,
+    User,
+    Document,
+    DocumentImage,
+    AuditLog,
+    EscalationEvent,
+)
 
 config = context.config
 if config.config_file_name is not None:
@@ -24,13 +31,16 @@ def run_migrations_offline() -> None:
         url=str(settings.DATABASE_URL),
         target_metadata=target_metadata,
         literal_binds=True,
+        compare_type=True,
     )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection, target_metadata=target_metadata, compare_type=True
+    )
     with context.begin_transaction():
         context.run_migrations()
 

@@ -1,6 +1,7 @@
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Text
+from sqlalchemy import DateTime, Enum, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -23,8 +24,10 @@ class EscalationEvent(Base):
         UUID(as_uuid=True), ForeignKey("audit_log.id"), nullable=False
     )
     reason: Mapped[str] = mapped_column(EscalationReason, nullable=False)
-    notified_at: Mapped[str] = mapped_column(server_default=func.now())
-    resolved_at: Mapped[str | None] = mapped_column(nullable=True)
+    notified_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     resolved_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("user.id"), nullable=True
     )

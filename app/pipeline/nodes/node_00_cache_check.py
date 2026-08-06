@@ -25,6 +25,7 @@ class CacheCheckNode(BaseNode):
     async def execute(self, state: PipelineState) -> PipelineState:
         query = state["query"]
         user_role = state["user_role"]
+        user_is_admin = state["user_is_admin"]
 
         try:
             vector = await self._embedder.embed_single(query)
@@ -36,6 +37,7 @@ class CacheCheckNode(BaseNode):
                 collection=self._settings.QDRANT_CACHE_COLLECTION,
                 query_vector=vector,
                 allowed_roles=[user_role],
+                user_is_admin=user_is_admin,
                 limit=1,
             )
         except Exception:

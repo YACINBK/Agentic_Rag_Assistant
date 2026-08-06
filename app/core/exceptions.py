@@ -28,3 +28,7 @@ class AuthenticationError(Exception):
 
 class AuthorizationError(Exception):
     """User lacks required permissions (e.g. is_admin for upload)."""
+
+
+class FileValidationError(Exception):
+    """Upload rejected — extension outside ALLOWED_EXTENSIONS or other validation failure."""

@@ -9,8 +9,8 @@ from app.core.state import ChunkPayload
 
 class QdrantVectorStore(BaseVectorStore):
 
-    def __init__(self) -> None:
-        self._client = AsyncQdrantClient(
+    def __init__(self, client: AsyncQdrantClient | None = None) -> None:
+        self._client = client or AsyncQdrantClient(
             host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
         )
 
@@ -19,6 +19,7 @@ class QdrantVectorStore(BaseVectorStore):
         collection: str,
         query_vector: list[float],
         allowed_roles: list[str],
+        user_is_admin: bool,
         limit: int = 10,
     ) -> list[ChunkPayload]:
         # Role filter field differs by collection schema (CLAUDE.md §8 vs §9):
@@ -29,17 +30,30 @@ class QdrantVectorStore(BaseVectorStore):
             if collection == settings.QDRANT_CACHE_COLLECTION
             else "allowed_roles"
         )
+
+        # Two-dimension security filter (CLAUDE.md §5 Layer 1):
+        #   allowed_roles — subject-matter scope (whose job is this about?)
+        #   admin_only    — privilege tier (how much trust does reading it need?)
+        # Non-admin: both conditions ANDed. Admin: privilege condition ABSENT
+        # (not inverted — admins must see restricted AND unrestricted chunks).
+        must = [
+            models.FieldCondition(
+                key=role_key,
+                match=models.MatchAny(any=allowed_roles),
+            )
+        ]
+        if not user_is_admin:
+            must.append(
+                models.FieldCondition(
+                    key="admin_only",
+                    match=models.MatchValue(value=False),
+                )
+            )
+
         results = await self._client.query_points(
             collection_name=collection,
             query=query_vector,
-            query_filter=models.Filter(
-                must=[
-                    models.FieldCondition(
-                        key=role_key,
-                        match=models.MatchAny(any=allowed_roles),
-                    )
-                ]
-            ),
+            query_filter=models.Filter(must=must),
             limit=limit,
             with_payload=True,
         )
