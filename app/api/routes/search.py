@@ -8,11 +8,13 @@ check — never before (CLAUDE.md §12).
 
 from __future__ import annotations
 
+import re
 import uuid
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup, escape
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.dependencies import require_auth
@@ -31,6 +33,31 @@ _FALLBACK_HTML = (
     '<div class="error-container"><p>I could not find sufficient information '
     "in the available documents to answer your question.</p></div>"
 )
+
+# A bracketed run of digits — the [N] citation marker the generator emits.
+_MARKER_RE = re.compile(r"\[(\d+)\]")
+
+
+def markup_answer(answer: str, citations: list[dict]) -> Markup:
+    """Escape the answer, then splice a rendered citation marker over each [N]
+    that has a matching Citation.
+
+    Three constraints, all from the contract's substitution seam:
+    - Escape FIRST (markupsafe.escape), then substitute — chunk- and model-derived
+      prose is neutralised before any trusted markup is inserted.
+    - Only markers with a Citation are replaced; an unmatched [7] survives as
+      literal text (never rewritten, never dropped).
+    - `_MARKER_RE` matches the exact bracketed token, so [1] cannot corrupt [11].
+    """
+    escaped = str(escape(answer))
+    citation_macro = templates.get_template("components/citation.html").module.citation
+    by_index = {cite["index"]: str(citation_macro(cite)) for cite in citations}
+
+    def _replace(match: re.Match) -> str:
+        rendered = by_index.get(int(match.group(1)))
+        return rendered if rendered is not None else match.group(0)
+
+    return Markup(_MARKER_RE.sub(_replace, escaped))
 
 
 @search_router.get("/")
@@ -116,12 +143,14 @@ async def search_stream(
                 {c.get("original_filename", "unknown") for c in result.get("reranked_chunks", [])}
             )
 
+        citations = result.get("citations", [])
+
         # Clear the progress indicator now that the pipeline has finished.
         yield {"event": "progress", "data": "<div></div>"}
 
         if answer:
             html = templates.get_template("components/message_bubble.html").render(
-                answer=answer, sources=sources
+                answer=markup_answer(answer, citations), citations=citations, sources=sources
             )
             yield {"event": "answer", "data": html}
         else:

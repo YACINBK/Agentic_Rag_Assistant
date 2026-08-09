@@ -1,11 +1,11 @@
 <div class="message-bubble message-assistant">
-    <div class="message-content">{{ answer }}</div>
+    <div class="message-content">{{ answer|safe }}</div>
     {% if sources %}
     <div class="message-sources">
         <span class="sources-label">Sources:</span>
         <div class="sources-list">
             {% for source in sources %}
-            {% include "components/source_card.html" %}
+            <span class="source-card">{{ source }}</span>
             {% endfor %}
         </div>
     </div>

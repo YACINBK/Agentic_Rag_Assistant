@@ -8,7 +8,6 @@ from app.core.state import ChunkPayload
 
 
 class QdrantVectorStore(BaseVectorStore):
-
     def __init__(self, client: AsyncQdrantClient | None = None) -> None:
         self._client = client or AsyncQdrantClient(
             host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
@@ -25,11 +24,7 @@ class QdrantVectorStore(BaseVectorStore):
         # Role filter field differs by collection schema (CLAUDE.md §8 vs §9):
         #   documents      → payload key "allowed_roles" (list[str])
         #   semantic_cache → payload key "role"          (str)
-        role_key = (
-            "role"
-            if collection == settings.QDRANT_CACHE_COLLECTION
-            else "allowed_roles"
-        )
+        role_key = "role" if collection == settings.QDRANT_CACHE_COLLECTION else "allowed_roles"
 
         # Two-dimension security filter (CLAUDE.md §5 Layer 1):
         #   allowed_roles — subject-matter scope (whose job is this about?)
@@ -69,6 +64,10 @@ class QdrantVectorStore(BaseVectorStore):
                 page_number=point.payload.get("page_number", 0),
                 chunk_index=point.payload.get("chunk_index", 0),
                 score=point.score,
+                # Written by the ingestion pipeline; default for pre-ingestion chunks.
+                section_path=point.payload.get("section_path", ""),
+                anchor=point.payload.get("anchor", ""),
+                image_refs=point.payload.get("image_refs", []),
             )
             for point in results.points
         ]
@@ -101,7 +100,5 @@ class QdrantVectorStore(BaseVectorStore):
         ]
         await self._client.delete(
             collection_name=collection,
-            points_selector=models.FilterSelector(
-                filter=models.Filter(must=must_conditions)
-            ),
+            points_selector=models.FilterSelector(filter=models.Filter(must=must_conditions)),
         )

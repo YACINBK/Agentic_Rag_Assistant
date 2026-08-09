@@ -1,0 +1,65 @@
+/* Citation hover card — inline [N] marker with an eagerly-rendered, hidden card.
+   Interactivity is Alpine (x-show); this file only styles the two states. */
+
+[x-cloak] {
+    display: none !important;
+}
+
+.cite-wrapper {
+    position: relative;
+    display: inline;
+}
+
+.cite-marker {
+    color: #1a4b8c;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0 1px;
+}
+
+.cite-marker:hover,
+.cite-marker:focus {
+    text-decoration: underline;
+}
+
+.cite-card {
+    position: absolute;
+    left: 0;
+    top: 1.5em;
+    z-index: 10;
+    width: 360px;
+    max-width: 90vw;
+    /* Chunk text is up to 800 tokens — clamp height, never truncate server-side. */
+    max-height: 320px;
+    overflow: auto;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-weight: 400;
+    text-align: left;
+    white-space: normal;
+}
+
+.cite-crumb {
+    display: block;
+    font-size: 0.8rem;
+    color: #555555;
+    margin-bottom: 6px;
+}
+
+.cite-text {
+    display: block;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.cite-card img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-top: 8px;
+    border: 1px solid #cccccc;
+}

@@ -11,7 +11,7 @@ from app.core.logging import configure_logging, get_logger
 from app.core.models.base import async_session, engine
 from app.core.settings import settings
 from app.api.error_handlers import register_error_handlers
-from app.api.routes import search_router
+from app.api.routes import images_router, search_router
 from app.services import qdrant_bootstrap
 from app.services.auth import KeycloakAuthService, SESSION_COOKIE
 
@@ -57,6 +57,7 @@ else:
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(search_router)
+app.include_router(images_router)
 
 if settings.DEV_MODE:
     # Imported inside the branch, not at module level: app/api/routes/dev.py is

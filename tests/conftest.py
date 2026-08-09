@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import uuid
+from pathlib import Path
 
 import pytest
 
@@ -411,6 +414,76 @@ def make_authenticated_redis(
         user = make_user_session()
     redis = MockRedis(data={f"session:{session_id}": serialize_user_session(user)})
     return redis, session_id
+
+
+# ---------------------------------------------------------------------------
+# Image / document seed helpers (image_serving_route integration tests)
+# ---------------------------------------------------------------------------
+
+# The developer role seeded by the initial migration
+# (alembic/versions/ddb267266304_initial_schema.py). Documents need an uploader,
+# and the uploader needs a real role_id — this is the one guaranteed to exist.
+SEED_ROLE_DEVELOPER_ID = uuid.UUID("a1b2c3d4-0000-4000-8000-000000000001")
+
+
+def make_image_bytes(size: int = 1024) -> bytes:
+    """Realistic random image payload — os.urandom so each blob hashes uniquely."""
+    return os.urandom(size)
+
+
+async def seed_document_with_image(
+    session,
+    document_id,
+    image_id,
+    image_bytes,
+    restricted,
+    tmp_upload_dir,
+):
+    """Insert one Document + its junction row and write the image file to disk.
+
+    Self-contained: also inserts an uploader User (Document.uploaded_by is NOT NULL),
+    keyed uniquely off document_id so repeated calls never collide. The file lands
+    under `tmp_upload_dir/derived/{image_id}.png` — the only directory the route
+    serves from. Returns (document_id, image_id).
+    """
+    from app.core.models.document import Document
+    from app.core.models.document_image import DocumentImage
+    from app.core.models.user import User
+
+    uploader = User(
+        id=uuid.uuid4(),
+        email=f"uploader-{document_id}@seed.test",
+        keycloak_id=f"kc-{document_id}",
+        role_id=SEED_ROLE_DEVELOPER_ID,
+        is_admin=True,
+        is_owner=False,
+    )
+    session.add(uploader)
+    await session.flush()
+
+    document = Document(
+        id=document_id,
+        source_path=f"/seed/{document_id}.pdf",
+        original_filename=f"{document_id}.pdf",
+        category="technical",
+        restricted=restricted,
+        doc_hash=hashlib.sha256(f"doc-{document_id}".encode()).hexdigest(),
+        uploaded_by=uploader.id,
+        chunk_count=0,
+        ingestion_status="done",
+    )
+    session.add(document)
+    await session.flush()
+
+    session.add(DocumentImage(document_id=document.id, image_id=image_id))
+    await session.flush()
+
+    derived = Path(tmp_upload_dir) / "derived"
+    derived.mkdir(parents=True, exist_ok=True)
+    (derived / f"{image_id}.png").write_bytes(image_bytes)
+
+    await session.commit()
+    return (document.id, image_id)
 
 
 # ---------------------------------------------------------------------------
