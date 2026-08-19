@@ -87,3 +87,7 @@ README_status.md
 # The corpus is an input to ingestion, not a project deliverable.
 /*.html
 
+
+# Ingestion runtime output — regenerable, never committed
+uploads/
+scratchpad/
