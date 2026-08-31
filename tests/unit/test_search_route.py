@@ -6,8 +6,9 @@ Auth is real: require_auth + MockRedis session. Templates render for real.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -17,6 +18,35 @@ from app.core.exceptions import RetrievalError
 from tests.conftest import MockRedis, make_chunk, make_user_session, serialize_user_session
 
 SESSION_ID = "abc123"
+
+
+@pytest.fixture(autouse=True)
+def _isolate_mvp_finish_seams(monkeypatch):
+    """The stream route's M10/M11 wiring must never reach real services here.
+
+    Found live 2026-08-31: the writer's OllamaEmbedder/QdrantVectorStore are
+    constructed inside the handler (lazy imports), and async_session opens a
+    real engine — an unpatched run leaked ten garbage points into the LIVE
+    semantic_cache collection (audit stayed clean only because the fake
+    user_id fails the FK). Patched at the source modules: the handler's lazy
+    imports read them at call time.
+    """
+    from app.services import audit as audit_mod
+
+    monkeypatch.setattr(
+        "app.services.embedder.OllamaEmbedder", MagicMock()
+    )
+    monkeypatch.setattr(
+        "app.services.vector_store.QdrantVectorStore", MagicMock()
+    )
+    fake_session = MagicMock()
+    fake_session.__enter__ = AsyncMock(return_value=MagicMock())
+    fake_session.__exit__ = AsyncMock(return_value=False)
+    monkeypatch.setattr("app.api.routes.search.async_session", fake_session)
+    # The audit helpers are the session's collaborators; neutralise them too —
+    # their own behaviour is test_mvp_finish.py's subject, not this file's.
+    monkeypatch.setattr(audit_mod, "record_query_outcome", AsyncMock(return_value=None))
+    monkeypatch.setattr(audit_mod, "record_escalation", AsyncMock(return_value=None))
 
 
 def _make_app(redis: MockRedis) -> FastAPI:

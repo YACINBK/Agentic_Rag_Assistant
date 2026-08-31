@@ -9,6 +9,7 @@ check — never before (CLAUDE.md §12).
 from __future__ import annotations
 
 import re
+import time
 import uuid
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -18,10 +19,14 @@ from markupsafe import Markup, escape
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.dependencies import require_auth
+from app.core.models.base import async_session
 from app.core.security import UserSession
 from app.core.settings import settings
 from app.core.state import PipelineState
 from app.pipeline.factory import get_compiled_pipeline
+from app.services.audit import record_escalation, record_query_outcome
+from app.services.cache_writer import write_cache_entry
+from app.services.rate_limit import is_allowed
 
 search_router = APIRouter(prefix="/search", tags=["search"])
 templates = Jinja2Templates(directory="app/templates")
@@ -123,6 +128,19 @@ async def search_submit(
     if not cleaned:
         return JSONResponse(status_code=400, content={"detail": "Query cannot be empty"})
 
+    # M12 — per-user budget before any LLM cost is committed. 429, plain JSON:
+    # no partial to swap, the search area simply does not change.
+    if not await is_allowed(
+        request.app.state.redis,
+        user_id=user.user_id,
+        max_requests=settings.RATE_LIMIT_MAX_REQUESTS,
+        window_seconds=settings.RATE_LIMIT_WINDOW_SECONDS,
+    ):
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too many searches — wait a moment and try again."},
+        )
+
     qid = uuid.uuid4().hex
     await request.app.state.redis.setex(f"{QUERY_PREFIX}{qid}", QUERY_TTL_SECONDS, cleaned)
 
@@ -156,6 +174,7 @@ async def search_stream(
         # first node starts (pipeline compile on a cold call). `cache_check`
         # replaces it within milliseconds, so wording it as a stage — the old
         # "Searching documents…" — read as the progress line rewinding.
+        started = time.monotonic()  # M11: the full pipeline, not the tail end
         yield {
             "event": "progress",
             "data": '<div class="progress">Starting&hellip;</div>',
@@ -199,13 +218,77 @@ async def search_stream(
         # Pipeline complete — answer released ONLY after this point (§12).
         answer = result.get("cached_answer") or result.get("direct_response")
         sources: list[str] = []
+        generated_faithful = False
         if not answer and result.get("is_faithful") and result.get("generated_answer"):
             answer = result["generated_answer"]
+            generated_faithful = True
+        # Sources render from citations on EVERY answered path — generated,
+        # cached (node 0 rebuilds citations from the entry's payload) — so the
+        # cached answer keeps the full pipeline's polish, images included.
+        if answer and not result.get("direct_response"):
             sources = sorted(
-                {c.get("original_filename", "unknown") for c in result.get("reranked_chunks", [])}
+                {
+                    c.get("original_filename", "unknown")
+                    for c in (result.get("citations") or result.get("reranked_chunks", []))
+                }
             )
 
         citations = result.get("citations", [])
+        chunks = result.get("reranked_chunks", []) or []
+        response_time_ms = int((time.monotonic() - started) * 1000)
+
+        # ── M10 + M11: persist the outcome. AFTER the verdict, BEFORE the final
+        # frames — audit is append-only (§12) and the cache write is faithful-only
+        # (never on a hit: nothing to learn; never on DIRECT: nothing grounded).
+        # Both are soft-fail: the answer is already determined, and losing the
+        # record logs louder than breaking the stream would.
+        cache_hit = bool(result.get("cache_hit"))
+        direct = bool(result.get("direct_response")) and not generated_faithful
+        was_escalated = False
+        reason: str | None = None
+        if not cache_hit and not direct:
+            discarded = bool(result.get("generated_answer")) and not result.get("is_faithful")
+            was_escalated = discarded or not answer
+            reason = "faithfulness_failure" if discarded else "relevance_failure"
+
+        audit_row = None
+        try:
+            async with async_session() as session:
+                audit_row = await record_query_outcome(
+                    session,
+                    user_id=user.user_id,
+                    query_text=str(query),
+                    answer_text=str(answer or "") or "— declined: insufficient information —",
+                    confidence_score=result.get("faithfulness_score"),
+                    was_escalated=was_escalated,
+                    cache_hit=cache_hit,
+                    chunks_used=[c.get("chunk_id") for c in chunks if c.get("chunk_id")],
+                    namespace_queried=settings.QDRANT_COLLECTION,
+                    response_time_ms=response_time_ms,
+                )
+                if was_escalated and audit_row is not None:
+                    await record_escalation(
+                        session, audit_log_id=audit_row.id, reason=reason
+                    )
+                if generated_faithful:
+                    from app.services.embedder import OllamaEmbedder
+                    from app.services.vector_store import QdrantVectorStore
+
+                    await write_cache_entry(
+                        query=str(query),
+                        answer=str(answer),
+                        chunks=chunks,
+                        citations=result.get("citations", []),
+                        user_role=user.role,
+                        user_is_admin=user.is_admin,
+                        embedder=OllamaEmbedder(),
+                        vector_store=QdrantVectorStore(),
+                        settings=settings,
+                    )
+        except Exception:
+            # Soft-fail envelope: the helpers already log their own failures;
+            # anything escaping them must still not kill the delivered answer.
+            pass
 
         # Clear the progress indicator now that the pipeline has finished.
         yield {"event": "progress", "data": "<div></div>"}

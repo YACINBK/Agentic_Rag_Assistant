@@ -68,6 +68,10 @@ class QdrantVectorStore(BaseVectorStore):
                 section_path=point.payload.get("section_path", ""),
                 anchor=point.payload.get("anchor", ""),
                 image_refs=point.payload.get("image_refs", []),
+                # Cache-only projection: present on semantic_cache entries
+                # (M10 writes them), empty on document chunks — the cached path
+                # rebuilds its citations from this.
+                citations=point.payload.get("citations", []),
             )
             for point in results.points
         ]

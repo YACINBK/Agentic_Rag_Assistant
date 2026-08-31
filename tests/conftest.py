@@ -356,6 +356,16 @@ class MockRedis:
         members.update(values)
         return len(members) - before
 
+    # Added 2026-08-31, additively, for M12's fixed-window counter: INCR reads
+    # the current value as an int (default 0), stores value+1, returns it.
+    # Redis semantics preserved: missing key -> 1. (`expire` already existed —
+    # D22's addition — and is reused as-is.)
+    async def incr(self, key: str) -> int:
+        current = self._store.get(key)
+        value = (int(current) if current is not None else 0) + 1
+        self._store[key] = str(value)
+        return value
+
     async def smembers(self, key: str) -> set[str]:
         # A copy: callers iterate while deleting keys (purge_user_sessions).
         return set(self._sets.get(key, set()))

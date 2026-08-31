@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -63,6 +63,25 @@ class _RecordingQdrantClient:
             },
         )
         return SimpleNamespace(points=[point])
+
+
+
+@pytest.fixture(autouse=True)
+def _isolate_mvp_finish_seams(monkeypatch):
+    """Same isolation as test_search_route.py: this file's stream tests run the
+    real search router, whose M10/M11 wiring would otherwise reach the LIVE
+    Ollama/Qdrant/Postgres (two garbage cache points leaked exactly this way,
+    2026-08-31)."""
+    from app.services import audit as audit_mod
+
+    monkeypatch.setattr("app.services.embedder.OllamaEmbedder", MagicMock())
+    monkeypatch.setattr("app.services.vector_store.QdrantVectorStore", MagicMock())
+    fake_session = MagicMock()
+    fake_session.__enter__ = AsyncMock(return_value=MagicMock())
+    fake_session.__exit__ = AsyncMock(return_value=False)
+    monkeypatch.setattr("app.api.routes.search.async_session", fake_session)
+    monkeypatch.setattr(audit_mod, "record_query_outcome", AsyncMock(return_value=None))
+    monkeypatch.setattr(audit_mod, "record_escalation", AsyncMock(return_value=None))
 
 
 def _make_stream_app(redis: MockRedis) -> FastAPI:

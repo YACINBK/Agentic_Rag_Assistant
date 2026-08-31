@@ -23,8 +23,14 @@ class ChunkPayload(TypedDict):
 
     # --- Written by the ingestion pipeline; absent on pre-ingestion chunks ---
     section_path: NotRequired[str]  # "Chapter > Page > sub-section" breadcrumb
-    anchor: NotRequired[str]  # bkmrk-*/page-* deep-link target
+    anchor: NotRequired[str]  # bkmrk-*/page-* deep-link target; "" if absent
     image_refs: NotRequired[list[dict]]  # [{image_id, anchor}] for this chunk
+
+    # --- Cache-only: a semantic_cache hit carries the citations the original
+    # answer was generated with, so the cached path renders with the same
+    # hover cards, sources and images as the full pipeline (found live
+    # 2026-08-31: text-only cache hits served raw [N] markers, no images). ---
+    citations: NotRequired[list[dict]]
 
 
 class Citation(TypedDict):

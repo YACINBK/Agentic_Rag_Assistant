@@ -48,6 +48,11 @@ class CacheCheckNode(BaseNode):
                 **state,
                 "cache_hit": True,
                 "cached_answer": results[0]["text"],
+                # The polish survives the cache: the citations the original
+                # answer was generated with travel in the entry's payload, so
+                # a hit renders hover cards, sources and images exactly like
+                # the full pipeline instead of raw [N] markers.
+                "citations": results[0].get("citations", []),
             }
 
         return {**state, "cache_hit": False}

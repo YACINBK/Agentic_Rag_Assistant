@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     EMBEDDING_DIM: int = 1024
     CACHE_SIMILARITY_THRESHOLD: float = 0.92
     CACHE_TTL_HOURS: int = 24
+    # M12 — per-user search budget (fixed window). Internal assistant sizing:
+    # generous for a human, tight enough to protect the LLM budget.
+    RATE_LIMIT_MAX_REQUESTS: int = 10
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
 
     # --- Keycloak ---
     KEYCLOAK_URL: str = "http://localhost:8080"
