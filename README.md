@@ -93,4 +93,4 @@ calls and the latter for browser redirects.
 - **Phase 1 — Foundation:** core ABCs, ORM models, service skeletons, diagrams, Docker Compose. ✅
 - **Phase 2 — Pipeline:** all 9 nodes + graph integration, 57 tests passing. ✅
 - **Phase 3 — Auth + Frontend:** ✅.
-- **Phase 4 — Ingestion + Admin:** in progress.
+- **Phase 4 — Ingestion + Admin:** ✅.
