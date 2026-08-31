@@ -4,8 +4,9 @@ Compliance requirement (CLAUDE.md §10, §12).
 """
 
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -30,4 +31,6 @@ class AuditLog(Base):
     chunks_used: Mapped[dict] = mapped_column(JSON, default=list)
     namespace_queried: Mapped[str | None] = mapped_column(String(255), nullable=True)
     response_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    created_at: Mapped[str] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

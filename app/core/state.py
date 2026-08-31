@@ -6,7 +6,7 @@ State factory functions in tests/conftest.py build instances of this type.
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 
 class ChunkPayload(TypedDict):
@@ -21,6 +21,30 @@ class ChunkPayload(TypedDict):
     chunk_index: int
     score: float  # vector similarity or reranker score
 
+    # --- Written by the ingestion pipeline; absent on pre-ingestion chunks ---
+    section_path: NotRequired[str]  # "Chapter > Page > sub-section" breadcrumb
+    anchor: NotRequired[str]  # bkmrk-*/page-* deep-link target; "" if absent
+    image_refs: NotRequired[list[dict]]  # [{image_id, anchor}] for this chunk
+
+    # --- Cache-only: a semantic_cache hit carries the citations the original
+    # answer was generated with, so the cached path renders with the same
+    # hover cards, sources and images as the full pipeline (found live
+    # 2026-08-31: text-only cache hits served raw [N] markers, no images). ---
+    citations: NotRequired[list[dict]]
+
+
+class Citation(TypedDict):
+    """A resolved [N] marker — one cited chunk, what the hover card renders."""
+
+    index: int  # the N in [N], 1-based
+    chunk_id: str  # Qdrant point id of the cited chunk
+    document_id: str  # owning document — the hover card's image URLs need it
+    text: str  # the chunk's own text — what the hover card shows
+    section_path: str  # "Chapter > Page > sub-section" breadcrumb; "" if absent
+    anchor: str  # bkmrk-*/page-* deep-link target; "" if absent
+    image_refs: list[dict]  # [{image_id, anchor}] belonging to this chunk
+    original_filename: str
+
 
 class PipelineState(TypedDict, total=False):
     """LangGraph state passed between all pipeline nodes.
@@ -34,6 +58,7 @@ class PipelineState(TypedDict, total=False):
     user_id: str  # UUID from JWT
     user_role: str  # primary role name from JWT
     user_email: str
+    user_is_admin: bool  # is_admin flag from the session (§5 privilege tier)
 
     # --- Node 0: Cache Check ---
     cache_hit: bool
@@ -60,6 +85,7 @@ class PipelineState(TypedDict, total=False):
 
     # --- Node 6: Generator ---
     generated_answer: str  # BUFFERED — not streamed
+    citations: list[Citation]  # one entry per validated [N] marker, ordered by index
 
     # --- Node 7: Faithfulness ---
     is_faithful: bool

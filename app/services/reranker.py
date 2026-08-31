@@ -16,7 +16,7 @@ class TEIReranker(BaseReranker):
         query: str,
         passages: list[str],
     ) -> list[float]:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=settings.RERANKER_TIMEOUT_SECONDS) as client:
             response = await client.post(
                 f"{self._base_url}/rerank",
                 json={"query": query, "texts": passages},

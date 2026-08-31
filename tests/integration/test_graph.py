@@ -75,11 +75,11 @@ def _make_input(query: str = "What is the leave policy?") -> PipelineState:
         "user_id": "test-user-id",
         "user_role": "developer",
         "user_email": "test@whitecape.fr",
+        "user_is_admin": False,
     }
 
 
 class TestGraphIntegration:
-
     async def test_direct_query_short_circuits(self) -> None:
         nodes = _build_nodes(
             llm_classifier=MockLLMService(response="DIRECT"),
@@ -101,7 +101,9 @@ class TestGraphIntegration:
             llm_rewriter=MockLLMService(response="company leave policy details"),
             vector_store=MockVectorStore(results=chunks),
             reranker=MockReranker(scores=[0.95]),
-            llm_generator=MockLLMService(response="Employees get 25 days leave [source: handbook.pdf]."),
+            llm_generator=MockLLMService(
+                response="Employees get 25 days leave [source: handbook.pdf]."
+            ),
         )
         graph = build_pipeline(nodes)
 
@@ -181,3 +183,6 @@ class TestGraphIntegration:
         assert result["user_id"] == "test-user-id"
         assert result["user_role"] == "developer"
         assert result["user_email"] == "test@whitecape.fr"
+        # Security-relevant: a silently dropped privilege flag would make node 3
+        # fall back to whatever the retrieval path defaults to, unnoticed.
+        assert result["user_is_admin"] is False

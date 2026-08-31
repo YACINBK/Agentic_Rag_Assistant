@@ -1,0 +1,8 @@
+{% macro citation(cite) %}
+<span class="cite-wrapper" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" @focus="open = true" @blur="open = false">
+    <a class="cite-marker" href="#" tabindex="0">[{{ cite.index }}]</a>
+    <span class="cite-card" x-show="open" x-cloak>
+        {% with cite = cite %}{% include "components/source_card.html" %}{% endwith %}
+    </span>
+</span>
+{% endmacro %}

@@ -1,1 +1,5 @@
-<span class="source-card">{{ source }}</span>
+{% if cite.section_path %}<span class="cite-crumb">{{ cite.section_path }}</span>{% endif %}
+<span class="cite-text">{{ cite.text }}</span>
+{% for ref in cite.image_refs %}
+<img class="cite-img" loading="lazy" src="/documents/{{ cite.document_id }}/images/{{ ref.image_id }}" alt="">
+{% endfor %}

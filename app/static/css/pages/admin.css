@@ -1,0 +1,157 @@
+/* Admin documents page styles — loaded via {% block head %} in pages/admin/documents.html */
+
+.admin-documents-page h1 {
+    margin-bottom: 1.5rem;
+}
+
+/* Upload form */
+.upload-form {
+    max-width: 480px;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.form-group-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+}
+
+/* Document list */
+.document-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.document-list-empty {
+    color: #666;
+    font-style: italic;
+}
+
+.document-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.document-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.document-filename {
+    font-weight: 600;
+}
+
+.document-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: #666;
+}
+
+.badge.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge.status-running {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.badge.status-done {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.badge.status-failed {
+    background: #f8d7da;
+    color: #842029;
+}
+
+/* Users page (M9) — same admin group per §17 rule 8, loaded by
+   pages/admin/users.html. Button and badge variants come from base.css. */
+.admin-users-page h1 {
+    margin-bottom: 1.5rem;
+}
+
+.admin-users-note {
+    max-width: 640px;
+    margin-bottom: 1.5rem;
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.user-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.user-row-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-email {
+    font-weight: 600;
+}
+
+.user-role {
+    font-size: 0.8125rem;
+    color: #666;
+}
+
+.user-row-flags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.user-row-locked {
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: #666;
+}
+
+/* Upload outcome messaging (upload_status.js) */
+.upload-status {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    min-height: 1.25rem;
+}
+
+.upload-status:empty {
+    margin-top: 0;
+    min-height: 0;
+}
+
+.upload-status-ok {
+    color: #065f46;
+}
+
+.upload-status-error {
+    color: #991b1b;
+    font-weight: 500;
+}

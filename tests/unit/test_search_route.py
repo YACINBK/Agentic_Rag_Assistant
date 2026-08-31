@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -17,6 +18,35 @@ from app.core.exceptions import RetrievalError
 from tests.conftest import MockRedis, make_chunk, make_user_session, serialize_user_session
 
 SESSION_ID = "abc123"
+
+
+@pytest.fixture(autouse=True)
+def _isolate_mvp_finish_seams(monkeypatch):
+    """The stream route's M10/M11 wiring must never reach real services here.
+
+    Found live 2026-08-31: the writer's OllamaEmbedder/QdrantVectorStore are
+    constructed inside the handler (lazy imports), and async_session opens a
+    real engine — an unpatched run leaked ten garbage points into the LIVE
+    semantic_cache collection (audit stayed clean only because the fake
+    user_id fails the FK). Patched at the source modules: the handler's lazy
+    imports read them at call time.
+    """
+    from app.services import audit as audit_mod
+
+    monkeypatch.setattr(
+        "app.services.embedder.OllamaEmbedder", MagicMock()
+    )
+    monkeypatch.setattr(
+        "app.services.vector_store.QdrantVectorStore", MagicMock()
+    )
+    fake_session = MagicMock()
+    fake_session.__enter__ = AsyncMock(return_value=MagicMock())
+    fake_session.__exit__ = AsyncMock(return_value=False)
+    monkeypatch.setattr("app.api.routes.search.async_session", fake_session)
+    # The audit helpers are the session's collaborators; neutralise them too —
+    # their own behaviour is test_mvp_finish.py's subject, not this file's.
+    monkeypatch.setattr(audit_mod, "record_query_outcome", AsyncMock(return_value=None))
+    monkeypatch.setattr(audit_mod, "record_escalation", AsyncMock(return_value=None))
 
 
 def _make_app(redis: MockRedis) -> FastAPI:
@@ -37,12 +67,34 @@ def _auth_client(redis: MockRedis | None = None) -> tuple[TestClient, MockRedis]
     return client, redis
 
 
-def _mock_pipeline(result: dict | None = None, error: Exception | None = None) -> MagicMock:
+def _mock_pipeline(
+    result: dict | None = None,
+    error: Exception | None = None,
+    nodes: tuple[str, ...] = ("cache_check", "classifier"),
+) -> MagicMock:
+    """Stand-in compiled graph shaped like `astream(stream_mode=["debug","values"])`.
+
+    The route streams rather than `ainvoke`s so the progress line can advance while
+    the pipeline runs — a single `await` cannot yield. LangGraph's tuple shape is
+    reproduced exactly: ("debug", {"type": "task", "payload": {"name": <node>}}) at
+    each node start, then ("values", <accumulated state>). The route keeps the last
+    `values` payload, so yielding it once at the end is equivalent to what
+    `ainvoke` returned.
+
+    `nodes` drives which stage labels the route should emit; `error` is raised from
+    inside the generator so it surfaces through the route's `async for`, which is
+    where a real pipeline failure would land.
+    """
     graph = MagicMock()
-    if error is not None:
-        graph.ainvoke = AsyncMock(side_effect=error)
-    else:
-        graph.ainvoke = AsyncMock(return_value=result or {})
+
+    async def fake_astream(state, stream_mode=None):
+        if error is not None:
+            raise error
+        for name in nodes:
+            yield "debug", {"type": "task", "payload": {"name": name}}
+        yield "values", result or {}
+
+    graph.astream = fake_astream
     return graph
 
 
@@ -135,6 +187,47 @@ class TestSearchStream:
 
         assert "event: error" in response.text
         assert "Qdrant unavailable" in response.text
+
+    def test_sse_stream_emits_a_progress_label_per_pipeline_stage(self) -> None:
+        """The stage line must advance as the pipeline runs, not sit static.
+
+        Before this, the route awaited `ainvoke` — one await, which cannot yield —
+        so a single "Searching documents…" frame covered the whole 2–4s+ run. Here
+        four nodes start, so four distinct stage labels must reach the client, in
+        node order, each naming the stage that is running.
+
+        Pinned because a revert to `ainvoke` is otherwise silent: every other SSE
+        test still passes with one progress frame.
+        """
+        client, redis = _auth_client()
+        redis._store["query:qid-5"] = "What is the leave policy?"
+
+        result = {"generated_answer": "The answer", "is_faithful": True, "reranked_chunks": []}
+        with patch(
+            "app.api.routes.search.get_compiled_pipeline",
+            return_value=_mock_pipeline(
+                result=result,
+                nodes=("classifier", "qdrant_search", "generator", "faithfulness"),
+            ),
+        ):
+            response = client.get("/search/stream?qid=qid-5")
+
+        expected = [
+            "Understanding the question",
+            "Searching indexed documents",
+            "Composing the answer",
+            "Verifying every claim against the sources",
+        ]
+        positions = [response.text.find(label) for label in expected]
+        missing = [label for label, pos in zip(expected, positions) if pos == -1]
+        assert not missing, f"missing stage labels: {missing}"
+        # Node order, not just presence — a set-membership check would pass on a
+        # scrambled or coincidental ordering.
+        assert positions == sorted(positions)
+
+        # The answer is still one buffered event after the stages (§12).
+        assert response.text.count("event: answer") == 1
+        assert response.text.find("event: answer") > max(positions)
 
     def test_sse_stream_ends_with_done(self) -> None:
         client, redis = _auth_client()

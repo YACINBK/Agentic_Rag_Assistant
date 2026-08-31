@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "macros/buttons.html" import btn %}
+
+{% block title %}Whitecape Knowledge Assistant{% endblock %}
+
+{% block content %}
+{# The public landing — the first thing an unauthenticated visitor sees.
+   No redirect to a login page: the Login button IS the OIDC entry point
+   (/auth/start). Signup is a future addition (registrationAllowed=false in the
+   realm); a second button would slot in beside this one. #}
+<div class="landing-container">
+    <div class="landing-branding">
+        <h1>Whitecape Technologies</h1>
+        <p class="branding-subtitle">Internal Knowledge Assistant</p>
+    </div>
+    <p>Search the company's indexed documentation. Sign in to continue.</p>
+    {{ btn("Login", href="/auth/start") }}
+</div>
+{% endblock %}

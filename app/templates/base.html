@@ -5,15 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Whitecape Knowledge Assistant{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+    <script src="/static/js/csrf.js"></script>
     {% block head %}{% endblock %}
 </head>
-<body hx-boost="true">
+{# hx-boost is OFF by default. Every route that serves both a full page and a
+   partial branches on the HX-Request header (search.py:81, admin.py:207,
+   admin.py:289), so a boosted <a> — which sends that header on a full
+   NAVIGATION — receives the bare partial: correct markup swapped into <body>
+   with no {% block head %}, so the page's own stylesheet never loads. That is a
+   navigation, not a swap, and boost cannot be the default while those routes
+   branch that way. Opt individual links in with hx-boost="true" only where the
+   target has no partial branch. #}
+<body>
     <nav class="nav">
         <a href="/" class="nav-brand">Whitecape Knowledge</a>
         {% if user %}
         <div class="nav-right">
+            {# role_confirmed in the condition: a first-login admin/owner must
+               not see a way around the role picker — the gate middleware
+               enforces it, hiding the links just removes the dead end. #}
+            {% if user.is_admin and user.role_confirmed %}<a href="/admin/documents" class="nav-link" hx-boost="false">Documents</a>{% endif %}
+            {# Gated on is_owner alone: §2's invariant makes it sufficient, and
+               `is_admin or is_owner` is forbidden (§12). hx-boost="false" for the
+               same reason as Documents — a boosted link sends HX-Request: true,
+               which would return the bare partial for a full navigation. #}
+            {% if user.is_owner and user.role_confirmed %}<a href="/admin/users" class="nav-link" hx-boost="false">Users</a>{% endif %}
             <span class="nav-user">{{ user.email }}</span>
             <a href="/auth/logout" class="nav-link">Logout</a>
         </div>

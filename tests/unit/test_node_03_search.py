@@ -9,7 +9,6 @@ from tests.conftest import MockEmbedder, MockVectorStore, make_chunk, make_post_
 
 
 class TestQdrantSearchNode:
-
     async def test_embeds_and_searches_with_role_filter(self) -> None:
         chunks = [make_chunk(), make_chunk()]
         embedder = MockEmbedder()
@@ -81,3 +80,62 @@ class TestQdrantSearchNode:
         await node.execute(state)
 
         assert store.search_calls[0]["allowed_roles"] == ["qa_engineer", "all"]
+
+    async def test_passes_admin_flag_true(self) -> None:
+        """Case 6 / assertion 9 — the True path.
+
+        Without this, a node hardcoding `user_is_admin=False` passes every other
+        test in the suite: the False cases agree with it, and the admin filter
+        tests in test_m0_privilege_dimension.py call the vector store directly,
+        never routing through this node. The resulting bug is silent — admins
+        simply stop seeing restricted chunks, with no error and no log line.
+        """
+        embedder = MockEmbedder()
+        store = MockVectorStore(results=[make_chunk()])
+        settings = Settings()
+        node = QdrantSearchNode(embedder=embedder, vector_store=store, settings=settings)
+        state = make_post_classifier_state(
+            rewritten_query="test query",
+            user_role="developer",
+            user_is_admin=True,
+        )
+
+        await node.execute(state)
+
+        assert store.search_calls[0]["user_is_admin"] is True
+
+    async def test_passes_admin_flag_false(self) -> None:
+        """Case 7 / assertion 9 — the False path."""
+        embedder = MockEmbedder()
+        store = MockVectorStore(results=[make_chunk()])
+        settings = Settings()
+        node = QdrantSearchNode(embedder=embedder, vector_store=store, settings=settings)
+        state = make_post_classifier_state(
+            rewritten_query="test query",
+            user_role="developer",
+            user_is_admin=False,
+        )
+
+        await node.execute(state)
+
+        assert store.search_calls[0]["user_is_admin"] is False
+
+    async def test_missing_admin_flag_raises(self) -> None:
+        """Case 8 / assertion 10 — omission must fail loudly.
+
+        `state.get("user_is_admin", False)` would pass every other test here.
+        A default of False silently under-serves admins; a default of True leaks
+        restricted content. Neither is detectable at runtime, so the only safe
+        behaviour is to raise — and to raise before search() is reached.
+        """
+        embedder = MockEmbedder()
+        store = MockVectorStore(results=[make_chunk()])
+        settings = Settings()
+        node = QdrantSearchNode(embedder=embedder, vector_store=store, settings=settings)
+        state = make_post_classifier_state(rewritten_query="test query")
+        del state["user_is_admin"]
+
+        with pytest.raises(KeyError):
+            await node.execute(state)
+
+        assert store.search_calls == []

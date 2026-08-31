@@ -1,3 +1,4 @@
+import re
 from contextlib import asynccontextmanager
 
 import redis.asyncio as aioredis
@@ -7,12 +8,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette_csrf import CSRFMiddleware
 
+from app.api.error_handlers import register_error_handlers
+from app.api.routes import admin_router, images_router, onboarding_router, search_router
 from app.core.logging import configure_logging, get_logger
 from app.core.models.base import async_session, engine
+from app.core.role_gate import RoleGateMiddleware
 from app.core.settings import settings
-from app.api.error_handlers import register_error_handlers
-from app.api.routes import search_router
-from app.services.auth import KeycloakAuthService, SESSION_COOKIE
+from app.services import qdrant_bootstrap
+from app.services.auth import SESSION_COOKIE, KeycloakAuthService
 
 configure_logging()
 logger = get_logger(__name__)
@@ -22,6 +25,10 @@ templates = Jinja2Templates(directory="app/templates")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Bootstrap Qdrant first and let it fail loudly: a running app with no
+    # collections answers every query with "insufficient information" (contract M2).
+    # Module-qualified call so tests can patch qdrant_bootstrap.ensure_collections.
+    await qdrant_bootstrap.ensure_collections()
     app.state.redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
     logger.info("application_started")
     yield
@@ -37,16 +44,49 @@ app = FastAPI(
 
 register_error_handlers(app)
 
-app.add_middleware(
-    CSRFMiddleware,
-    secret=settings.SECRET_KEY,
-    sensitive_cookies={SESSION_COOKIE},
-    exempt_urls=["/auth/callback"],
-)
+if not settings.DEV_MODE:
+    app.add_middleware(
+        CSRFMiddleware,
+        secret=settings.SECRET_KEY,
+        sensitive_cookies={SESSION_COOKIE},
+        # COMPILED patterns, not strings. starlette_csrf types this
+        # `Optional[List[Pattern]]` and `_url_is_exempt` calls
+        # `exempt_url.match(url.path)` — a plain str raises
+        # `AttributeError: 'str' object has no attribute 'match'`. And it raises on
+        # EVERY unsafe-method request carrying a session cookie, because the guard
+        # short-circuits as `method not in safe_methods and not _url_is_exempt(...)`:
+        # GETs never reach it, so this stayed invisible in dev (DEV_MODE=true skips
+        # this whole block) while every POST would have 500'd in production —
+        # POST /search included. Caught by M7's CSRF test, which is the only suite
+        # that attaches this middleware.
+        exempt_urls=[re.compile(r"^/auth/callback$")],
+    )
+else:
+    logger.warning(
+        "dev_mode_enabled", hint="CSRF disabled, /dev routes active — DO NOT use in production"
+    )
+
+# The first-login role gate. Added AFTER CSRF so it is the OUTERMOST middleware:
+# an unconfirmed user's POST gets a friendly redirect to the picker instead of a
+# CSRF rejection first. Exempts the picker/auth/static/dev paths internally, so
+# DEV_MODE needs no special case here (dev sessions are born confirmed, and the
+# /dev routes are exempt regardless).
+app.add_middleware(RoleGateMiddleware)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(search_router)
+app.include_router(images_router)
+app.include_router(admin_router)
+app.include_router(onboarding_router)
+
+if settings.DEV_MODE:
+    # Imported inside the branch, not at module level: app/api/routes/dev.py is
+    # local-only scaffolding and is not committed. A top-level import would make
+    # startup fail with ImportError on any checkout that lacks it, DEV_MODE or not.
+    from app.api.routes.dev import dev_router
+
+    app.include_router(dev_router)
 
 
 # --- Health ---
@@ -62,7 +102,14 @@ async def health():
 
 @app.get("/auth/login", name="login_page")
 async def login_page(request: Request):
-    return templates.TemplateResponse(request, "pages/login.html")
+    """Bounce to the public landing — this route no longer renders a page.
+
+    It must keep existing under this name and path: Keycloak's registered
+    post_logout_redirect_uri points here (the realm whitelists /auth/login),
+    and the auth error handlers redirect expired sessions to it. Both converge
+    on the landing page at `/`, which carries the Login button.
+    """
+    return RedirectResponse(url="/")
 
 
 @app.get("/auth/start")
@@ -78,14 +125,15 @@ async def auth_callback(request: Request):
     async with async_session() as db:
         auth_service = KeycloakAuthService(db=db, redis=request.app.state.redis)
         try:
-            await auth_service.handle_callback(request)
+            user_session = await auth_service.handle_callback(request)
             await db.commit()
         except Exception:
             await db.rollback()
             raise
 
     session_id = request.state.session_id
-    response = RedirectResponse(url="/", status_code=303)
+    target = "/" if user_session.role_confirmed else "/onboarding/role"
+    response = RedirectResponse(url=target, status_code=303)
     response.set_cookie(
         key=SESSION_COOKIE,
         value=session_id,
@@ -113,11 +161,30 @@ async def auth_logout(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    async with async_session() as db:
-        auth_service = KeycloakAuthService(db=db, redis=request.app.state.redis)
-        user = await auth_service.get_current_user(request)
+    # In dev mode, session lookup is Redis-only (no DB needed)
+    user = None
+    session_id = request.cookies.get(SESSION_COOKIE)
+    if session_id:
+        import json
+
+        data = await request.app.state.redis.get(f"session:{session_id}")
+        if data:
+            from app.core.security import UserSession
+
+            user = UserSession(**json.loads(data))
+
+    if not user and not settings.DEV_MODE:
+        # Production: try Keycloak auth service
+        async with async_session() as db:
+            auth_service = KeycloakAuthService(db=db, redis=request.app.state.redis)
+            user = await auth_service.get_current_user(request)
 
     if not user:
-        return RedirectResponse(url="/auth/login")
+        if settings.DEV_MODE:
+            return RedirectResponse(url="/dev/login")
+        # The public landing: the first thing a visitor sees, with the Login
+        # button as the OIDC entry point. No redirect to a login page — the
+        # app is the entry, auth is one click inside it.
+        return templates.TemplateResponse(request, "pages/landing.html")
 
     return templates.TemplateResponse(request, "pages/dashboard.html", {"user": user})

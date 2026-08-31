@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Documents — Whitecape Knowledge Assistant{% endblock %}
+
+{% block head %}<link rel="stylesheet" href="/static/css/pages/admin.css">
+<script src="/static/js/upload_status.js"></script>{% endblock %}
+
+{% block content %}
+<div class="admin-documents-page">
+    <h1>Documents</h1>
+    {% include "components/upload_form.html" %}
+    {% include "partials/document_list.html" %}
+</div>
+{% endblock %}

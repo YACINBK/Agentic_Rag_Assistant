@@ -22,6 +22,16 @@ class UserSession:
     role: str
     is_admin: bool
     is_owner: bool
+    # `user.role_source != "default"` — False means nobody has chosen this user's
+    # role yet, which is what M9c's first-login picker keys on.
+    #
+    # The default is load-bearing and must not be removed. Sessions already in
+    # Redis were serialised by `json.dumps(user_session.__dict__)` before this
+    # field existed, and all three reconstruction sites do `UserSession(**payload)`
+    # — app/api/dependencies.py:35, app/main.py:157, app/services/auth.py:128.
+    # Without a default, every live session raises TypeError on the first request
+    # after deploy, the fixed dev session included.
+    role_confirmed: bool = True
 
 
 class BaseAuthService(ABC):

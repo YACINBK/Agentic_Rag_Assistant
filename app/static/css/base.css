@@ -156,17 +156,17 @@ body {
     color: #92400e;
 }
 
-/* Login */
-.login-container {
+/* Landing (public entry — the Login button lives here) */
+.landing-container {
     text-align: center;
     margin-top: 4rem;
 }
 
-.login-container h1 {
+.landing-container h1 {
     margin-bottom: 0.5rem;
 }
 
-.login-container p {
+.landing-container p {
     margin-bottom: 1.5rem;
     color: #666;
 }

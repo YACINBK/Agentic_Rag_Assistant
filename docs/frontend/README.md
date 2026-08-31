@@ -75,7 +75,7 @@ base.html                          Root layout — nav, HTMX, SSE extension, blo
 | Module | Files | Doc | Status |
 |---|---|---|---|
 | Macros + base enhancements | `macros/forms.html`, `macros/buttons.html`, `base.html` | [frontend_macros.md](frontend_macros.md) | Verified |
-| Login + dashboard pages | `pages/login.html`, `pages/dashboard.html`, `base.css` | [frontend_base_pages.md](frontend_base_pages.md) | Verified |
+| Landing + dashboard pages | `pages/landing.html`, `pages/dashboard.html`, `base.css` | [frontend_base_pages.md](frontend_base_pages.md) | Verified |
 | Search route + SSE | `api/routes/search.py`, `pipeline/factory.py` | [search_route.md](search_route.md) | Verified |
 | Search templates + CSS | `pages/search.html`, `partials/`, `components/`, `search.css` | [search_frontend.md](search_frontend.md) | Verified |
 
@@ -99,7 +99,7 @@ app/api/routes/__init__.py            Exports search_router
 app/pipeline/factory.py               Composition root: build_pipeline_nodes + get_compiled_pipeline
 app/templates/base.html               Root layout: nav, HTMX 2.0.4, SSE extension, blocks
 app/templates/pages/search.html       Search page (extends base, loads search.css)
-app/templates/pages/login.html        Login page (btn macro, company branding)
+app/templates/pages/landing.html        Public landing — Login button (btn macro, company branding)
 app/templates/pages/dashboard.html    Dashboard (macros, admin/owner badges, search link)
 app/templates/partials/search_page_content.html   Search bar + results div
 app/templates/partials/search_results.html        SSE connection container

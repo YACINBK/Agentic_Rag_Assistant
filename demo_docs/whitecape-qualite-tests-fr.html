@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Whitecape — Processus qualité et stratégie de test</title>
+</head>
+<body>
+
+<h1 id="chapter-30">Assurance qualité</h1>
+
+<h1 id="page-301">Niveaux de test</h1>
+<p id="bkmrk-niveaux">Quatre niveaux de test sont pratiqués. Les tests unitaires valident une fonction isolée sans service externe. Les tests d'intégration valident l'assemblage de plusieurs composants avec une base de données réelle. Les tests de bout en bout valident un parcours utilisateur complet. Les tests de recette sont exécutés manuellement par l'équipe de validation.</p>
+<p id="bkmrk-couverture">La couverture de test attendue est de quatre-vingts pour cent sur les modules métier et de cent pour cent sur les règles de sécurité. Une baisse de couverture supérieure à deux points entre deux versions bloque la fusion de la branche concernée.</p>
+<h2 id="bkmrk-isolation">Isolation des tests</h2>
+<p>Les tests d'intégration s'exécutent contre une base de données dédiée et jetable, jamais contre la base de développement. Un test qui laisse des données résiduelles après son exécution est considéré comme défectueux, même s'il passe.</p>
+
+<h1 id="page-302">Critères d'acceptation</h1>
+<p id="bkmrk-forme">Un critère d'acceptation est rédigé sous la forme d'un fait unique et vérifiable indépendamment. Les formulations composées contenant « et » ou « ou » sont refusées en revue, car elles empêchent de désigner précisément la partie en échec.</p>
+<p id="bkmrk-nombre">Chaque fonctionnalité porte au minimum six et au maximum dix critères d'acceptation. En dessous de six, le périmètre est insuffisamment décrit. Au-dessus de dix, la fonctionnalité doit être découpée.</p>
+<h2 id="bkmrk-vide">Comportement sur résultat vide</h2>
+<p>Le comportement attendu en cas de résultat vide est explicitement décrit pour chaque fonctionnalité. Un retour nul non documenté est traité comme un défaut de spécification et non comme un défaut d'implémentation.</p>
+
+<h1 id="page-303">Gravité des anomalies</h1>
+<p id="bkmrk-gravite">Quatre niveaux de gravité sont utilisés. Bloquant désigne une anomalie empêchant l'usage de la fonctionnalité sans contournement. Majeur désigne une anomalie avec contournement coûteux. Mineur désigne un écart sans impact fonctionnel. Cosmétique désigne un écart de présentation.</p>
+<p id="bkmrk-delais">Les délais de correction attendus sont de quatre heures ouvrées pour un bloquant, deux jours ouvrés pour un majeur, la version suivante pour un mineur et le fil de l'eau pour un cosmétique. Un bloquant non corrigé dans le délai est escaladé au responsable qualité.</p>
+<h2 id="bkmrk-regression">Non-régression</h2>
+<p>Toute anomalie corrigée donne lieu à un test automatisé qui échoue avant la correction et passe après. Une correction livrée sans ce test est refusée en revue, sans exception, y compris pour un correctif urgent.</p>
+
+<h1 id="page-304">Validation des réponses de l'assistant</h1>
+<p id="bkmrk-fidelite">Une réponse de l'assistant interne n'est transmise à l'utilisateur qu'après vérification de sa fidélité aux extraits documentaires utilisés. Une réponse jugée non fidèle est écartée et remplacée par un message de repli, et un événement d'escalade est enregistré.</p>
+<p id="bkmrk-pertinence">Si les extraits retrouvés n'atteignent pas le seuil de pertinence, une seule nouvelle tentative avec une requête élargie est effectuée. Si cette tentative échoue également, l'assistant déclare explicitement ne pas disposer de l'information plutôt que de produire une réponse approximative.</p>
+<h2 id="bkmrk-citations">Citations</h2>
+<p>Chaque affirmation d'une réponse renvoie à un extrait identifiable par son document d'origine et sa position. Une réponse sans citation vérifiable est traitée comme une anomalie de gravité majeure.</p>
+
+</body>
+</html>

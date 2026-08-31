@@ -1,16 +1,71 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import uuid
+from pathlib import Path
 
 import pytest
+from sqlalchemy.engine.url import make_url
 
 from app.core.security import BaseAuthService, UserSession
 from app.core.services.embedder import BaseEmbedder
 from app.core.services.llm import BaseLLMService
 from app.core.services.reranker import BaseReranker
 from app.core.services.vector_store import BaseVectorStore
+from app.core.settings import settings
 from app.core.state import ChunkPayload, PipelineState
+
+# ---------------------------------------------------------------------------
+# Integration-test database guard
+# ---------------------------------------------------------------------------
+
+
+def require_test_database_url(suite: str) -> str:
+    """Return TEST_DATABASE_URL, skipping if unset and failing if it is the dev DB.
+
+    Every integration fixture that runs `alembic downgrade base` must call this
+    first. Downgrade drops every table, so aiming it at the development database
+    destroys it silently — the suite still passes.
+
+    Compares DATABASE NAMES, not URL strings. The previous guard was
+    `if test_url == str(settings.DATABASE_URL)`, which a difference in spelling
+    defeats while both URLs still address the same physical database:
+
+        settings.DATABASE_URL = ...@postgres:5432/whitecape    # .env, container name
+        TEST_DATABASE_URL     = ...@localhost:5432/whitecape   # host-side tooling
+
+    Those strings are unequal, so the old guard passed — and then wiped the dev
+    schema. That configuration was live in this repo until `.env.local` landed
+    (see its header), so this is a latent hazard that was actually reachable, not
+    a hypothetical one. `127.0.0.1` vs `localhost`, an added `?ssl=` query, and a
+    `postgresql://` vs `postgresql+asyncpg://` driver prefix defeat it the same way.
+
+    Comparing names alone is sufficient and needs no knowledge of which hostnames
+    happen to resolve to the same server: if the names differ, they are different
+    databases on any host; if they match, refuse regardless of how the host is
+    spelled. Distinct names are the only thing that actually separates them.
+    """
+    test_url = os.environ.get("TEST_DATABASE_URL")
+    if not test_url:
+        pytest.skip(f"TEST_DATABASE_URL not set — {suite} integration tests skipped")
+
+    test_db = make_url(test_url).database
+    dev_db = make_url(str(settings.DATABASE_URL)).database
+
+    if not test_db:
+        pytest.fail(f"TEST_DATABASE_URL names no database: {test_url!r}")
+
+    if test_db == dev_db:
+        pytest.fail(
+            f"TEST_DATABASE_URL and settings.DATABASE_URL both name the database "
+            f"{test_db!r}. These tests run `alembic downgrade base`, which would "
+            f"drop every table in the development database. Point TEST_DATABASE_URL "
+            f"at a distinct database name (e.g. {dev_db}_test)."
+        )
+
+    return test_url
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +94,7 @@ def make_state(**overrides) -> PipelineState:
         "user_id": str(uuid.uuid4()),
         "user_role": "employee",
         "user_email": "test@whitecape.fr",
+        "user_is_admin": False,
     }
     defaults.update(overrides)
     return defaults
@@ -112,12 +168,18 @@ class MockVectorStore(BaseVectorStore):
         self.search_calls: list[dict] = []
         self.upsert_calls: list[dict] = []
         self.delete_calls: list[dict] = []
+        # A NEW list, not a shared one: delete_by_any is a different operation from
+        # delete_by_filter, and folding both into delete_calls would silently change
+        # what every prior test's `delete_calls == []` assertion means (M6 mock
+        # contract, additive only — the rule MockRedis was extended under).
+        self.delete_by_any_calls: list[dict] = []
 
     async def search(
         self,
         collection: str,
         query_vector: list[float],
         allowed_roles: list[str],
+        user_is_admin: bool,
         limit: int = 10,
     ) -> list[ChunkPayload]:
         self.search_calls.append(
@@ -126,6 +188,7 @@ class MockVectorStore(BaseVectorStore):
                 "query_vector": query_vector,
                 "allowed_roles": allowed_roles,
                 "limit": limit,
+                "user_is_admin": user_is_admin,
             }
         )
         return self._results[:limit]
@@ -135,6 +198,11 @@ class MockVectorStore(BaseVectorStore):
 
     async def delete_by_filter(self, collection: str, filter_conditions: dict) -> None:
         self.delete_calls.append({"collection": collection, "filter": filter_conditions})
+
+    async def delete_by_any(self, collection: str, key: str, values: list[str]) -> None:
+        self.delete_by_any_calls.append(
+            {"collection": collection, "key": key, "values": values}
+        )
 
 
 class MockReranker(BaseReranker):
@@ -257,6 +325,10 @@ class MockRedis:
     def __init__(self, data: dict[str, str] | None = None):
         self._store: dict[str, str] = data or {}
         self._ttls: dict[str, int] = {}
+        # Set keyspace (M9): user_sessions:{user_id} reverse index. Kept separate
+        # from _store so the string store stays a string store — get/setex types
+        # are unchanged.
+        self._sets: dict[str, set[str]] = {}
 
     async def get(self, key: str) -> str | None:
         return self._store.get(key)
@@ -268,9 +340,49 @@ class MockRedis:
     async def delete(self, key: str) -> None:
         self._store.pop(key, None)
         self._ttls.pop(key, None)
+        # Real DEL removes a key whatever its type, and purge_user_sessions
+        # deletes the reverse-index set by key. No pre-M9 test puts anything in
+        # _sets, so behaviour for every existing caller is unchanged.
+        self._sets.pop(key, None)
 
     async def aclose(self) -> None:
         pass
+
+    # --- Set commands (M9, additive) ---
+
+    async def sadd(self, key: str, *values: str) -> int:
+        members = self._sets.setdefault(key, set())
+        before = len(members)
+        members.update(values)
+        return len(members) - before
+
+    # Added 2026-08-31, additively, for M12's fixed-window counter: INCR reads
+    # the current value as an int (default 0), stores value+1, returns it.
+    # Redis semantics preserved: missing key -> 1. (`expire` already existed —
+    # D22's addition — and is reused as-is.)
+    async def incr(self, key: str) -> int:
+        current = self._store.get(key)
+        value = (int(current) if current is not None else 0) + 1
+        self._store[key] = str(value)
+        return value
+
+    async def smembers(self, key: str) -> set[str]:
+        # A copy: callers iterate while deleting keys (purge_user_sessions).
+        return set(self._sets.get(key, set()))
+
+    async def srem(self, key: str, *values: str) -> int:
+        members = self._sets.get(key)
+        if not members:
+            return 0
+        removed = len(members & set(values))
+        members.difference_update(values)
+        return removed
+
+    async def expire(self, key: str, ttl: int) -> bool:
+        # Records the TTL without enforcing it — nothing in the suite advances
+        # time, and an enforcing mock would make tests depend on wall clock.
+        self._ttls[key] = ttl
+        return True
 
 
 # ---------------------------------------------------------------------------
@@ -286,6 +398,10 @@ def make_user_session(**overrides) -> UserSession:
         "role": "developer",
         "is_admin": False,
         "is_owner": False,
+        # True — the common case for every test that predates M9b: a user whose
+        # role has been decided. A first-login user (role_source="default") is the
+        # exception and passes role_confirmed=False explicitly.
+        "role_confirmed": True,
     }
     defaults.update(overrides)
     return UserSession(**defaults)
@@ -301,6 +417,11 @@ def make_user_model(**overrides):
         "role_id": uuid.uuid4(),
         "is_admin": False,
         "is_owner": False,
+        # Explicit rather than left to the column's server_default: an unflushed
+        # or freshly flushed model reads None for a server-default column, and
+        # `role_source != "default"` would then report an unconfirmed user as
+        # confirmed. Tests that want the confirmed case pass "admin_assigned".
+        "role_source": "default",
     }
     defaults.update(overrides)
     return User(**defaults)
@@ -408,3 +529,146 @@ def make_authenticated_redis(
         user = make_user_session()
     redis = MockRedis(data={f"session:{session_id}": serialize_user_session(user)})
     return redis, session_id
+
+
+# ---------------------------------------------------------------------------
+# Image / document seed helpers (image_serving_route integration tests)
+# ---------------------------------------------------------------------------
+
+# The developer role seeded by the initial migration
+# (alembic/versions/ddb267266304_initial_schema.py). Documents need an uploader,
+# and the uploader needs a real role_id — this is the one guaranteed to exist.
+SEED_ROLE_DEVELOPER_ID = uuid.UUID("a1b2c3d4-0000-4000-8000-000000000001")
+
+
+def make_image_bytes(size: int = 1024) -> bytes:
+    """Realistic random image payload — os.urandom so each blob hashes uniquely."""
+    return os.urandom(size)
+
+
+async def seed_document_with_image(
+    session,
+    document_id,
+    image_id,
+    image_bytes,
+    restricted,
+    tmp_upload_dir,
+):
+    """Insert one Document + its junction row and write the image file to disk.
+
+    Self-contained: also inserts an uploader User (Document.uploaded_by is NOT NULL),
+    keyed uniquely off document_id so repeated calls never collide. The file lands
+    under `tmp_upload_dir/derived/{image_id}.png` — the only directory the route
+    serves from. Returns (document_id, image_id).
+    """
+    from app.core.models.document import Document
+    from app.core.models.document_image import DocumentImage
+    from app.core.models.user import User
+
+    uploader = User(
+        id=uuid.uuid4(),
+        email=f"uploader-{document_id}@seed.test",
+        keycloak_id=f"kc-{document_id}",
+        role_id=SEED_ROLE_DEVELOPER_ID,
+        is_admin=True,
+        is_owner=False,
+    )
+    session.add(uploader)
+    await session.flush()
+
+    document = Document(
+        id=document_id,
+        source_path=f"/seed/{document_id}.pdf",
+        original_filename=f"{document_id}.pdf",
+        category="technical",
+        restricted=restricted,
+        doc_hash=hashlib.sha256(f"doc-{document_id}".encode()).hexdigest(),
+        uploaded_by=uploader.id,
+        chunk_count=0,
+        ingestion_status="done",
+    )
+    session.add(document)
+    await session.flush()
+
+    session.add(DocumentImage(document_id=document.id, image_id=image_id))
+    await session.flush()
+
+    derived = Path(tmp_upload_dir) / "derived"
+    derived.mkdir(parents=True, exist_ok=True)
+    (derived / f"{image_id}.png").write_bytes(image_bytes)
+
+    await session.commit()
+    return (document.id, image_id)
+
+
+# ---------------------------------------------------------------------------
+# Qdrant bootstrap mock (M2)
+# ---------------------------------------------------------------------------
+
+
+class _FakeCollectionInfo:
+    """Return value of get_collection — only .payload_schema is read by bootstrap."""
+
+    def __init__(self, payload_schema: dict | None):
+        self.payload_schema = payload_schema
+
+
+class FakeQdrantAdmin:
+    """Recording double for AsyncQdrantClient's admin surface (contract M2 line 91).
+
+    Records the full kwargs of every create_collection / create_payload_index call
+    because the assertions are about the *values* passed (size, distance, schema),
+    not merely that a call happened. Existing collections and their already-indexed
+    fields are test-settable. Simulates no Qdrant errors unless a test sets them.
+    """
+
+    def __init__(self) -> None:
+        # Test-settable state:
+        self.existing_collections: set[str] = set()
+        self.payload_schemas: dict[str, dict] = {}  # collection -> {field: schema}
+        # Recorded calls:
+        self.create_collection_calls: list[dict] = []
+        self.create_payload_index_calls: list[dict] = []
+        self.collection_exists_calls: list[str] = []
+        self.get_collection_calls: list[str] = []
+        self.delete_collection_calls: list[str] = []
+        self.delete_calls: list[dict] = []
+
+    async def collection_exists(self, collection_name: str) -> bool:
+        self.collection_exists_calls.append(collection_name)
+        return collection_name in self.existing_collections
+
+    async def get_collection(self, collection_name: str) -> _FakeCollectionInfo:
+        self.get_collection_calls.append(collection_name)
+        return _FakeCollectionInfo(self.payload_schemas.get(collection_name, {}))
+
+    async def create_collection(self, collection_name: str, vectors_config, **kwargs) -> None:
+        self.create_collection_calls.append(
+            {"collection_name": collection_name, "vectors_config": vectors_config, **kwargs}
+        )
+
+    async def create_payload_index(
+        self, collection_name: str, field_name: str, field_schema, **kwargs
+    ) -> None:
+        self.create_payload_index_calls.append(
+            {
+                "collection_name": collection_name,
+                "field_name": field_name,
+                "field_schema": field_schema,
+                **kwargs,
+            }
+        )
+
+    async def delete_collection(self, collection_name: str, **kwargs) -> None:
+        self.delete_collection_calls.append(collection_name)
+
+    async def delete(self, collection_name: str, **kwargs) -> None:
+        self.delete_calls.append({"collection_name": collection_name, **kwargs})
+
+    async def close(self) -> None:  # bootstrap only closes clients it owns; never here
+        pass
+
+
+@pytest.fixture
+def fake_qdrant_admin() -> FakeQdrantAdmin:
+    return FakeQdrantAdmin()

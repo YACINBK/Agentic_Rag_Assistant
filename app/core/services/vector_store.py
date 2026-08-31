@@ -20,9 +20,14 @@ class BaseVectorStore(ABC):
         collection: str,
         query_vector: list[float],
         allowed_roles: list[str],
+        user_is_admin: bool,
         limit: int = 10,
     ) -> list[ChunkPayload]:
-        """Semantic search with mandatory role filter."""
+        """Semantic search with the mandatory two-dimension security filter.
+
+        user_is_admin is a required argument with NO default (CLAUDE.md §5):
+        omitting it must raise TypeError, never silently guess a privilege tier.
+        """
         ...
 
     @abstractmethod
@@ -41,4 +46,20 @@ class BaseVectorStore(ABC):
         filter_conditions: dict,
     ) -> None:
         """Delete points matching filter conditions."""
+        ...
+
+    @abstractmethod
+    async def delete_by_any(
+        self,
+        collection: str,
+        key: str,
+        values: list[str],
+    ) -> None:
+        """Delete points whose payload `key` matches ANY of `values`.
+
+        Distinct from delete_by_filter, which builds MatchValue only and therefore
+        cannot match a value *inside* a payload array (M6 D2). The semantic cache's
+        `chunk_ids` is such an array, so MatchValue against it would match nothing
+        and report success — a silent no-op where a deletion was required.
+        """
         ...
