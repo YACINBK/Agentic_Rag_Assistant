@@ -28,6 +28,7 @@ from sqlalchemy import select, update
 
 from app.core.models.base import async_session
 from app.core.models.user import ROLE_SOURCE_DEFAULT, User
+from app.core.settings import settings
 
 # The four realm identities (deploy/keycloak/whitecape-realm.json). Anything
 # else in the table is dev-era seed data and is left alone.
@@ -58,12 +59,31 @@ async def plan() -> list[tuple[str, str, str, str]]:
 
 
 async def apply(reset_admin: bool) -> None:
+    from app.core.models.role import Role
+
     async with async_session() as session:
-        # 1. Role picker state: every realm account back to 'default'.
+        # The born-default role every account gets at first login.
+        role = (
+            (
+                await session.execute(
+                    select(Role).where(Role.name == settings.DEFAULT_ROLE)
+                )
+            )
+            .scalar_one_or_none()
+        )
+        if role is None:
+            print(f"Error: default role '{settings.DEFAULT_ROLE}' not found.")
+            sys.exit(1)
+
+        # 1. Full first-login state: role_source back to 'default' AND the role
+        #    itself back to the born default. Resetting only role_source left a
+        #    previously picked role visible in the Users list for an account that
+        #    "hasn't picked yet" — the picker decides the role, so the reset must
+        #    un-decide it too.
         await session.execute(
             update(User)
             .where(User.email.in_(REALM_ACCOUNTS))
-            .values(role_source=ROLE_SOURCE_DEFAULT)
+            .values(role_source=ROLE_SOURCE_DEFAULT, role_id=role.id)
         )
         # 2. The M9d grant target loses is_admin (never the owner — guarded by
         #    email, not by flag, so the owner account is structurally out of

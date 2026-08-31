@@ -12,6 +12,7 @@ from app.api.error_handlers import register_error_handlers
 from app.api.routes import admin_router, images_router, onboarding_router, search_router
 from app.core.logging import configure_logging, get_logger
 from app.core.models.base import async_session, engine
+from app.core.role_gate import RoleGateMiddleware
 from app.core.settings import settings
 from app.services import qdrant_bootstrap
 from app.services.auth import SESSION_COOKIE, KeycloakAuthService
@@ -64,6 +65,13 @@ else:
     logger.warning(
         "dev_mode_enabled", hint="CSRF disabled, /dev routes active — DO NOT use in production"
     )
+
+# The first-login role gate. Added AFTER CSRF so it is the OUTERMOST middleware:
+# an unconfirmed user's POST gets a friendly redirect to the picker instead of a
+# CSRF rejection first. Exempts the picker/auth/static/dev paths internally, so
+# DEV_MODE needs no special case here (dev sessions are born confirmed, and the
+# /dev routes are exempt regardless).
+app.add_middleware(RoleGateMiddleware)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

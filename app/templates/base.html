@@ -25,12 +25,15 @@
         <a href="/" class="nav-brand">Whitecape Knowledge</a>
         {% if user %}
         <div class="nav-right">
-            {% if user.is_admin %}<a href="/admin/documents" class="nav-link" hx-boost="false">Documents</a>{% endif %}
+            {# role_confirmed in the condition: a first-login admin/owner must
+               not see a way around the role picker — the gate middleware
+               enforces it, hiding the links just removes the dead end. #}
+            {% if user.is_admin and user.role_confirmed %}<a href="/admin/documents" class="nav-link" hx-boost="false">Documents</a>{% endif %}
             {# Gated on is_owner alone: §2's invariant makes it sufficient, and
                `is_admin or is_owner` is forbidden (§12). hx-boost="false" for the
                same reason as Documents — a boosted link sends HX-Request: true,
                which would return the bare partial for a full navigation. #}
-            {% if user.is_owner %}<a href="/admin/users" class="nav-link" hx-boost="false">Users</a>{% endif %}
+            {% if user.is_owner and user.role_confirmed %}<a href="/admin/users" class="nav-link" hx-boost="false">Users</a>{% endif %}
             <span class="nav-user">{{ user.email }}</span>
             <a href="/auth/logout" class="nav-link">Logout</a>
         </div>

@@ -74,6 +74,18 @@ picker → dashboard.
 **EXPECT:** Nav shows **Documents** but **not** Users — admin, not owner.
 Visit `http://localhost:8000/admin/users` in B directly → **403**.
 
+**If asked "how do accounts get created?"** — the honest answer, and it is the
+designed one: an account is created in **Keycloak** (the realm), which holds
+identity only. The person receives their credentials and logs in; the
+PostgreSQL row is created at that first login with the default role, and the
+role decision happens right there — either the person picks it (the picker you
+just saw) or the owner pre-empts the picker by assigning through this Users
+page (`role_source` becomes `admin_assigned`, the picker never shows for that
+account). So account creation does NOT override the picker — it is the picker's
+trigger. One ordering nuance to know: the owner cannot assign a role to an
+account that has never logged in (there is no row to assign to yet) — lazy
+sync, no webhooks, by design.
+
 ---
 
 ## M3 — Upload + the ingestion machine (2 min)

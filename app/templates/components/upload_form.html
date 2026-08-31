@@ -4,7 +4,7 @@
    which is what made a fresh upload invisible until a manual reload — D28). The
    202 carries the re-queried list partial, whose newest row is `pending`, so the
    swapped-in list arrives already polling. Non-HTMX callers still get JSON. #}
-<form class="upload-form" hx-post="/admin/documents" hx-encoding="multipart/form-data"
+<form class="upload-form" id="upload-form" hx-post="/admin/documents" hx-encoding="multipart/form-data"
       hx-target="#document-list" hx-swap="outerHTML">
     {{ form_field("file", "Document file", type="file", required=True) }}
     <div class="form-group">
@@ -23,4 +23,7 @@
         </label>
     </div>
     {{ btn("Upload", variant="primary", type="submit") }}
+    {# Outcome surface for upload_status.js: htmx never swaps 4xx bodies, so a
+       409 duplicate / 413 too-large / 400 bad-name would otherwise be silent. #}
+    <div id="upload-status" class="upload-status" aria-live="polite"></div>
 </form>

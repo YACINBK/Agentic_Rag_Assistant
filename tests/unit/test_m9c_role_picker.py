@@ -20,15 +20,23 @@ from tests.conftest import MockRedis, make_role_model, make_user_model, make_use
 
 
 class FakeResult:
-    def __init__(self, value=None, rows=None):
+    def __init__(self, value=None, rows=None, one_value=None):
         self.value = value
         self.rows = rows or []
+        # Added 2026-08-31, additively: the picker GET now selects
+        # (role_source, role_id) as a two-column row for the session-healing
+        # branch, so it reads result.one() instead of scalar_one(). Existing
+        # users are untouched; only statements configured with one_value use it.
+        self._one_value = one_value
 
     def scalar_one(self):
         return self.value
 
     def scalar_one_or_none(self):
         return self.value
+
+    def one(self):
+        return self._one_value
 
     def scalars(self):
         return SimpleNamespace(all=lambda: self.rows)
@@ -60,7 +68,15 @@ def test_picker_lists_every_role_from_the_table() -> None:
     ]
     ordered_roles = sorted(roles, key=lambda role: role.name)
     db_user = make_user_model(id=uuid.uuid4())
-    db_session = FakeSession([FakeResult(value="default"), FakeResult(rows=ordered_roles)])
+    # First result: the picker GET's (role_source, role_id) row — read via
+    # .one() since the session-healing amendment; role_id is unused on the
+    # render branch. Second: the Role list.
+    db_session = FakeSession(
+        [
+            FakeResult(value="default", one_value=("default", uuid.uuid4())),
+            FakeResult(rows=ordered_roles),
+        ]
+    )
     redis = MockRedis()
     user = make_user_session(user_id=str(db_user.id), role_confirmed=False)
     client = _make_client(redis, user, db_session)
@@ -78,8 +94,17 @@ def test_picker_lists_every_role_from_the_table() -> None:
 
 def test_decided_user_is_bounced_off_the_picker() -> None:
     role = make_role_model(id=uuid.uuid4(), name=f"scope-{uuid.uuid4().hex}")
-    db_user = make_user_model(id=uuid.uuid4(), role_source=ROLE_SOURCE_ADMIN_ASSIGNED)
-    db_session = FakeSession([FakeResult(value=db_user.role_source)])
+    db_user = make_user_model(id=uuid.uuid4(), role_id=role.id, role_source=ROLE_SOURCE_ADMIN_ASSIGNED)
+    # Result 1: the (role_source, role_id) row — decided. Result 2: the Role
+    # row the GET's session-healing branch loads before redirecting (the
+    # MockRedis carries no session key, so the heal write is skipped and the
+    # bounce is what is asserted — unchanged behaviour from before the gate).
+    db_session = FakeSession(
+        [
+            FakeResult(value=db_user.role_source, one_value=(db_user.role_source, role.id)),
+            FakeResult(value=role),
+        ]
+    )
     client = _make_client(MockRedis(), make_user_session(user_id=str(db_user.id)), db_session)
 
     response = client.get("/onboarding/role")

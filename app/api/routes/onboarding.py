@@ -27,9 +27,30 @@ async def role_picker(
     session: AsyncSession = Depends(get_session),
 ) -> Response:
     user_id = uuid.UUID(user.user_id)
-    result = await session.execute(select(User.role_source).where(User.id == user_id))
-    role_source = result.scalar_one()
+    result = await session.execute(
+        select(User.role_source, User.role_id).where(User.id == user_id)
+    )
+    role_source, role_id = result.one()
     if role_source != ROLE_SOURCE_DEFAULT:
+        # The DB says decided but THIS session was built before that decision
+        # (picked in another tab, or admin-assigned). Refresh the session so the
+        # role gate lets the user through — without this, the gate sends them
+        # here and this redirect sends them back: a loop. The POST path already
+        # writes the same two fields; this is the same healing, read-side.
+        roles_result = await session.execute(select(Role).where(Role.id == role_id))
+        role = roles_result.scalar_one()
+        session_id = request.cookies.get("session_id")
+        session_key = f"session:{session_id}"
+        session_data = await request.app.state.redis.get(session_key)
+        if session_data:
+            session_payload = json.loads(session_data)
+            session_payload["role"] = role.name
+            session_payload["role_confirmed"] = True
+            await request.app.state.redis.setex(
+                session_key,
+                settings.SESSION_TTL_SECONDS,
+                json.dumps(session_payload),
+            )
         return RedirectResponse(url="/", status_code=303)
 
     roles_result = await session.execute(select(Role).order_by(Role.name.asc()))

@@ -134,3 +134,24 @@
     font-style: italic;
     color: #666;
 }
+
+/* Upload outcome messaging (upload_status.js) */
+.upload-status {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    min-height: 1.25rem;
+}
+
+.upload-status:empty {
+    margin-top: 0;
+    min-height: 0;
+}
+
+.upload-status-ok {
+    color: #065f46;
+}
+
+.upload-status-error {
+    color: #991b1b;
+    font-weight: 500;
+}
