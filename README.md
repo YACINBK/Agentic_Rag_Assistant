@@ -80,8 +80,11 @@ skip the classifier LLM during downstream development.
 docker compose up
 ```
 
-Brings up the 9-service stack (backend, celery worker + beat, postgres, redis, qdrant,
-keycloak, ollama, reranker). The backend serves UI + API + SSE on port 8000.
+This is the all-container topology. For the demo machine's mixed host/Docker
+topology, use [LAUNCH.md](LAUNCH.md) instead. When running the backend in Docker,
+`KEYCLOAK_URL` is the internal service URL and `KEYCLOAK_PUBLIC_URL` is the
+browser-facing published URL; the backend uses the former for server-side OIDC
+calls and the latter for browser redirects.
 
 ---
 

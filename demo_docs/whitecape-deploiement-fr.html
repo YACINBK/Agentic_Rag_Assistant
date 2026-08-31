@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Whitecape — Procédure de déploiement applicatif</title>
+</head>
+<body>
+
+<h1 id="chapter-20">Exploitation technique</h1>
+
+<h1 id="page-201">Environnements</h1>
+<p id="bkmrk-envs">Trois environnements sont maintenus. L'environnement de développement est reconstruit à chaque fusion sur la branche develop. L'environnement de recette est déployé manuellement sur demande de l'équipe de validation. L'environnement de production est déployé uniquement lors des fenêtres de mise en production planifiées.</p>
+<p id="bkmrk-ports">Les services exposent des ports fixes et identiques sur tous les environnements. L'interface applicative écoute sur le port 8000, la base de données PostgreSQL sur le port 5432, le magasin vectoriel Qdrant sur le port 6333, le service de reclassement sur le port 8082 et le fournisseur d'identité Keycloak sur le port 8080.</p>
+<h2 id="bkmrk-fenetre">Fenêtre de mise en production</h2>
+<p>Les mises en production ont lieu le mardi et le jeudi entre 18h00 et 20h00. Aucun déploiement n'est autorisé le vendredi ni la veille d'un jour férié. Une mise en production hors fenêtre exige la validation écrite du responsable technique et du responsable qualité.</p>
+
+<h1 id="page-202">Procédure de déploiement</h1>
+<p id="bkmrk-prealable">Avant tout déploiement, la totalité des tests automatisés doit être au vert et la sauvegarde de la base de données doit être postérieure à la dernière migration appliquée. Un déploiement lancé sans sauvegarde vérifiée est considéré comme non conforme.</p>
+<p id="bkmrk-etapes">La procédure comporte cinq étapes dans cet ordre. Premièrement, arrêter les consommateurs de tâches asynchrones. Deuxièmement, appliquer les migrations de schéma. Troisièmement, déployer la nouvelle version de l'interface applicative. Quatrièmement, redémarrer les consommateurs de tâches. Cinquièmement, exécuter la vérification de bon fonctionnement.</p>
+<h2 id="bkmrk-verification">Vérification de bon fonctionnement</h2>
+<p>La vérification comprend l'appel du point de santé de l'interface applicative, une requête de recherche de bout en bout retournant au moins une source citée, et le contrôle que le nombre de points dans le magasin vectoriel est identique à celui relevé avant le déploiement.</p>
+
+<h1 id="page-203">Retour arrière</h1>
+<p id="bkmrk-rollback">Le retour arrière est déclenché si la vérification de bon fonctionnement échoue ou si le taux d'erreur dépasse cinq pour cent pendant plus de dix minutes. La décision appartient au responsable technique de permanence, sans validation préalable requise.</p>
+<p id="bkmrk-ordre">Le retour arrière s'effectue dans l'ordre inverse du déploiement. Les migrations de schéma sont annulées en dernier et uniquement si elles sont réversibles. Une migration non réversible interdit le retour arrière automatique et impose une restauration depuis la sauvegarde.</p>
+<h2 id="bkmrk-delai">Délai cible</h2>
+<p>Le délai cible de retour arrière est de quinze minutes à compter de la décision. Au-delà de trente minutes, l'incident est qualifié d'incident majeur et la cellule de crise est convoquée.</p>
+
+<h1 id="page-204">Journalisation et supervision</h1>
+<p id="bkmrk-logs">Les journaux applicatifs sont structurés au format JSON et conservés quatre-vingt-dix jours. Chaque entrée porte l'identifiant de requête, l'identifiant utilisateur et la durée de traitement en millisecondes. Les journaux ne contiennent jamais de mot de passe ni de jeton d'authentification.</p>
+<p id="bkmrk-audit">Toute requête adressée à l'assistant interne produit une entrée dans le journal d'audit. Ce journal est strictement en ajout seul : aucune modification ni suppression n'est possible, y compris par un administrateur. Cette contrainte répond à une exigence de conformité.</p>
+
+</body>
+</html>

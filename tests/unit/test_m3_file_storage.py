@@ -17,7 +17,6 @@ import pytest
 from app.core.exceptions import FileValidationError
 from app.core.services.storage import (
     ALLOWED_EXTENSIONS,
-    DERIVED_EXTENSIONS,
     compute_doc_hash,
 )
 from app.services.storage import LocalFileStorage

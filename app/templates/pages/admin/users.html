@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Users — Whitecape Knowledge Assistant{% endblock %}
+
+{% block head %}<link rel="stylesheet" href="/static/css/pages/admin.css">{% endblock %}
+
+{% block content %}
+<div class="admin-users-page">
+    <h1>Users</h1>
+    <p class="admin-users-note">
+        Granting admin widens retrieval scope to restricted documents and allows
+        document upload. Revoking it ends the target's active sessions immediately.
+        The Owner account is seeded at deployment and cannot be changed here.
+    </p>
+    {% include "partials/user_list.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{# HTMX swap target for GET /admin/users. There is no zero-user branch: the
+   actor is authenticated, so their own row always exists. #}
+<div class="user-list" id="user-list">
+{% for row_user in users %}
+    {% include "partials/user_row.html" %}
+{% endfor %}
+</div>

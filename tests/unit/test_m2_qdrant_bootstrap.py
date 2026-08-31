@@ -7,7 +7,6 @@ fixture from tests/conftest.py.
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from qdrant_client import models
 
 from app.services import qdrant_bootstrap

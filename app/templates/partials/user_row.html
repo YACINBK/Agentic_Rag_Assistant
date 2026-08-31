@@ -1,0 +1,35 @@
+{# One user row. A partial, not a component: it is an HTMX swap target on its own
+   (grant/revoke return exactly this fragment for the affected user). §17 rule 2.
+
+   `row_user` is the listed user; `user` stays the actor, because base.html reads
+   `user.is_admin` / `user.is_owner` for the nav and must not be shadowed. #}
+{% from "macros/buttons.html" import btn %}
+<div class="user-row" id="user-row-{{ row_user.id }}">
+    <div class="user-row-identity">
+        <span class="user-email">{{ row_user.email }}</span>
+        {# Role name comes from the Role table via the relationship — never a
+           hardcoded name, never a branch on one (§12, Forbidden 9). #}
+        <span class="user-role">{{ row_user.role.name }}</span>
+    </div>
+    <div class="user-row-flags">
+        {% if row_user.is_owner %}<span class="badge badge-owner">Owner</span>{% endif %}
+        {% if row_user.is_admin %}<span class="badge badge-admin">Admin</span>{% endif %}
+    </div>
+    <div class="user-row-actions">
+        {% if row_user.is_owner %}
+        {# No control at all for the Owner: is_owner is seeded at deployment and
+           not UI-manageable (§2, §12), and revoking is_admin would violate the
+           ck_owner_implies_admin invariant. The route refuses this with 409; the
+           UI does not offer it in the first place. #}
+        <span class="user-row-locked">Seeded at deployment</span>
+        {% elif row_user.is_admin %}
+        {{ btn("Revoke admin", variant="danger",
+               hx_delete="/admin/users/" ~ row_user.id ~ "/admin",
+               hx_target="closest .user-row", hx_swap="outerHTML") }}
+        {% else %}
+        {{ btn("Grant admin", variant="primary",
+               hx_post="/admin/users/" ~ row_user.id ~ "/admin",
+               hx_target="closest .user-row", hx_swap="outerHTML") }}
+        {% endif %}
+    </div>
+</div>

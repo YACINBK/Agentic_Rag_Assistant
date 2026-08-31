@@ -29,7 +29,10 @@ class RerankerNode(BaseNode):
         try:
             scores = await self._reranker.rerank(query=rewritten, passages=passages)
         except Exception as e:
-            raise RetrievalError(f"Reranker failed: {e}") from e
+            # type(e).__name__ is load-bearing: httpx timeout exceptions stringify to
+            # '', so a bare {e} produced "Reranker failed: " and said nothing about
+            # whether TEI refused, was unreachable, or simply ran past the ceiling.
+            raise RetrievalError(f"Reranker failed: {type(e).__name__}: {e}") from e
 
         if len(scores) != len(chunks):
             raise RetrievalError(

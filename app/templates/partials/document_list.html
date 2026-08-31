@@ -1,0 +1,12 @@
+<div class="document-list" id="document-list"
+     hx-get="/admin/documents" hx-swap="outerHTML"
+     {%- if poll %} hx-trigger="document-changed from:body, every {{ poll_interval }}s"
+     {%- else %} hx-trigger="document-changed from:body"{% endif %}>
+{% if documents %}
+    {% for document in documents %}
+        {% include "components/document_card.html" %}
+    {% endfor %}
+{% else %}
+    <p class="document-list-empty">No documents have been uploaded yet.</p>
+{% endif %}
+</div>

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Choose your role — Whitecape Knowledge Assistant{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h1>Choose your role</h1>
+    <p>Select the role that best describes your work.</p>
+    <form hx-post="/onboarding/role">
+        {% for role in roles %}
+        <label>
+            <input type="radio" name="role_id" value="{{ role.id }}" required>
+            {{ role.name }}
+        </label>
+        {% endfor %}
+        <button type="submit">Continue</button>
+    </form>
+</div>
+{% endblock %}

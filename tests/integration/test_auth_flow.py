@@ -11,12 +11,11 @@ import uuid
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.testclient import TestClient
 
-from app.api.dependencies import require_auth
 from app.api.error_handlers import register_error_handlers
 from app.core.security import UserSession
 from app.core.settings import settings
@@ -39,6 +38,11 @@ def _make_user_row(**overrides) -> SimpleNamespace:
         "role_id": uuid.uuid4(),
         "is_admin": False,
         "is_owner": False,
+        # M9b: the session's role is now read off the row via the eager-loaded
+        # relationship, and role_source decides UserSession.role_confirmed.
+        # A double without both stands in for a User that cannot exist.
+        "role_source": "admin_assigned",
+        "role": SimpleNamespace(name="developer"),
     }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
@@ -51,12 +55,23 @@ def _make_role_row(**overrides) -> SimpleNamespace:
 
 
 def _make_db(role=None, user=None) -> AsyncMock:
+    """Stand-in async session for the two queries `_lazy_sync_user` can issue.
+
+    ORDER, not entity: User is selected first, and Role only afterwards and only
+    on the new-user path (`_resolve_default_role`). An existing user consumes the
+    first element alone. This ordering was reversed before M9b, when the Role
+    lookup came first — leaving it reversed silently returns the *role* row where
+    the *user* is expected, which surfaces as `AttributeError: 'SimpleNamespace'
+    object has no attribute 'role'` inside the service rather than as a clear
+    fixture failure. Dispatching on the selected entity instead of on call order
+    would make that class of drift impossible; see D41.
+    """
     db = AsyncMock()
     role_result = MagicMock()
     role_result.scalar_one_or_none.return_value = role
     user_result = MagicMock()
     user_result.scalar_one_or_none.return_value = user
-    db.execute.side_effect = [role_result, user_result]
+    db.execute.side_effect = [user_result, role_result]
     return db
 
 
@@ -92,7 +107,10 @@ def _make_app(redis: MockRedis, db: AsyncMock) -> FastAPI:
 
     @app.get("/auth/login", name="login_page")
     async def login_page(request: Request):
-        return templates.TemplateResponse(request, "pages/login.html")
+        # Mirrors the real app since 2026-08-31: no page here, a bounce to the
+        # public landing. The route must exist under this name — Keycloak's
+        # registered post_logout_redirect_uri points at it.
+        return RedirectResponse(url="/")
 
     @app.get("/auth/start")
     async def auth_start(request: Request):
@@ -119,8 +137,21 @@ def _make_app(redis: MockRedis, db: AsyncMock) -> FastAPI:
         return response
 
     @app.get("/", response_class=HTMLResponse)
-    async def index(request: Request, user: UserSession = Depends(require_auth)):
-        return templates.TemplateResponse(request, "pages/dashboard.html", {"user": user})
+    async def index(request: Request):
+        # Mirrors the real app's `/` since 2026-08-31: the public landing for
+        # anonymous visitors (no redirect), the dashboard when a session exists.
+        session_id = request.cookies.get("session_id")
+        data = (
+            await request.app.state.redis.get(f"session:{session_id}")
+            if session_id
+            else None
+        )
+        if data:
+            user = UserSession(**json.loads(data))
+            return templates.TemplateResponse(
+                request, "pages/dashboard.html", {"user": user}
+            )
+        return templates.TemplateResponse(request, "pages/landing.html")
 
     return app
 
@@ -132,23 +163,28 @@ def _make_app(redis: MockRedis, db: AsyncMock) -> FastAPI:
 
 class TestAuthFlow:
 
-    def test_unauthenticated_root_redirects(self) -> None:
+    def test_unauthenticated_root_renders_landing(self) -> None:
         app = _make_app(MockRedis(), _make_db())
         client = TestClient(app, follow_redirects=False)
 
         response = client.get("/", headers={"Accept": "text/html"})
 
-        assert response.status_code == 303
-        assert "/auth/login" in response.headers["location"]
+        # The first thing a visitor sees is the app's landing with the Login
+        # button — not a redirect to a login page.
+        assert response.status_code == 200
+        assert "Login" in response.text
+        assert 'href="/auth/start"' in response.text
 
-    def test_login_page_renders(self) -> None:
+    def test_login_route_bounces_to_landing(self) -> None:
         app = _make_app(MockRedis(), _make_db())
-        client = TestClient(app)
+        client = TestClient(app, follow_redirects=False)
 
         response = client.get("/auth/login")
 
-        assert response.status_code == 200
-        assert "Sign in" in response.text
+        # No page here anymore: expired sessions and Keycloak's post-logout
+        # redirect both land on /auth/login and bounce to the landing.
+        assert response.status_code in (302, 303, 307)
+        assert response.headers["location"] == "/"
 
     def test_auth_start_redirects_to_keycloak(self) -> None:
         app = _make_app(MockRedis(), _make_db())
@@ -224,7 +260,13 @@ class TestAuthFlow:
         client = TestClient(app, follow_redirects=False)
         client.cookies.set("session_id", "abc123")
 
-        with patch.object(settings, "KEYCLOAK_URL", "http://keycloak:8080"):
+        # The logout redirect is browser-facing, so it is built from
+        # KEYCLOAK_PUBLIC_URL (issuer split, daee865) — patching KEYCLOAK_URL
+        # alone leaves the public URL in the Location header.
+        with (
+            patch.object(settings, "KEYCLOAK_URL", "http://keycloak:8080"),
+            patch.object(settings, "KEYCLOAK_PUBLIC_URL", "http://keycloak:8080"),
+        ):
             response = client.get("/auth/logout")
 
         assert response.status_code in (302, 303, 307)

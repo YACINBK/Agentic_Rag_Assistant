@@ -38,6 +38,24 @@ roles managed via a `Role` lookup table in PostgreSQL and mirrored in Keycloak.
 Developer and QA Engineer are the initial seed roles, not a fixed set.
 Adding a new role is an INSERT + Keycloak realm config — no code change, no migration.
 
+> **MVP scope amendment — 2026-08-26, decided by the project owner.** For the MVP,
+> roles are **not** mirrored in Keycloak. **Keycloak proves identity; PostgreSQL
+> decides access.** The `Role` table is the sole authority on a user's primary role,
+> the login path reads no authorization claim from Keycloak, and the realm carries
+> no roles at all — so adding a role is an INSERT alone, with no Keycloak config.
+> Roles are managed in the admin UI; the Keycloak console is never opened in normal
+> operation.
+>
+> Everything else in this section is unchanged and still binding — admin and owner
+> remain flags rather than roles, the Owner invariant holds, and the reserved names
+> `all`/`admin`/`owner` are still rejected at `Role` creation.
+>
+> Contracts: `m9b_role_authority` (authority + the login path),
+> `m9c_first_login_role_picker`, `m9d_admin_role_assignment`,
+> `m13_keycloak_realm_import` (the identity-only realm file). Recorded as finding
+> **D40**. Realigning with the mirrored-in-Keycloak design is **post-MVP** and is
+> not to be treated as a blocker before then.
+
 **Admin is not a role** — it is an additional flag (`is_admin = true`) granted
 on top of any primary role. An admin who is a Developer still gets
 developer-framed answers, but also has access to admin operations.

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -148,11 +148,14 @@ class TestStreamPopulatesFlag:
         captured: dict = {}
         graph = MagicMock()
 
-        async def fake_ainvoke(state):
+        # Shaped like astream(stream_mode=["debug","values"]) — the route streams so
+        # the progress line can advance mid-run. What this test asserts is unchanged:
+        # the state handed to the pipeline carries user_is_admin.
+        async def fake_astream(state, stream_mode=None):
             captured.update(state)
-            return {"is_faithful": True, "generated_answer": "answer"}
+            yield "values", {"is_faithful": True, "generated_answer": "answer"}
 
-        graph.ainvoke = fake_ainvoke
+        graph.astream = fake_astream
         with patch(
             "app.api.routes.search.get_compiled_pipeline", return_value=graph
         ):

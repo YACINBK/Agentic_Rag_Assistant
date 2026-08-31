@@ -29,7 +29,7 @@ Implements `BaseAuthService` ABC from `app/core/security.py`.
 ```
 get_authorization_url(request)
     ├── Build AsyncOAuth2Client with PKCE (S256)
-    ├── Create authorization URL pointing to Keycloak
+    ├── Create authorization URL pointing to the browser-facing Keycloak issuer
     ├── Store OAuth state + code_verifier in Redis (300s TTL)
     └── Return authorization URL string
 
@@ -39,8 +39,8 @@ handle_callback(request)
     ├── Lookup OAuth state in Redis
     │     └── Not found? → raise AuthenticationError (expired)
     ├── Delete consumed OAuth state from Redis
-    ├── Exchange code for tokens via Keycloak /token endpoint
-    ├── Fetch userinfo via Keycloak /userinfo endpoint
+    ├── Exchange code for tokens via the internal Keycloak issuer
+    ├── Fetch userinfo via the internal Keycloak issuer
     ├── Lazy sync user to PostgreSQL (find-or-create Role + User)
     ├── Create server-side session in Redis (SESSION_TTL_SECONDS)
     ├── Attach session_id to request.state
@@ -56,12 +56,14 @@ get_current_user(request)
 logout(request)
     ├── Read session_id cookie
     ├── Delete session:{id} from Redis
-    └── Return Keycloak logout URL (with post-logout redirect)
+    └── Return Keycloak logout URL using the browser-facing issuer
 ```
 
 ## 4. Behaviour
 
-**Authorization URL:** Builds a Keycloak OIDC auth URL with PKCE challenge.
+**Authorization URL:** Builds a Keycloak OIDC auth URL with PKCE challenge. The
+browser-facing issuer comes from `KEYCLOAK_PUBLIC_URL`; token and userinfo calls
+use `KEYCLOAK_URL`, which may be a Docker-only hostname.
 The OAuth state and PKCE code verifier are stored in Redis under
 `oauth_state:{state}` with a 300-second TTL.
 

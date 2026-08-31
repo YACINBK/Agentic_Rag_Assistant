@@ -102,3 +102,47 @@ class QdrantVectorStore(BaseVectorStore):
             collection_name=collection,
             points_selector=models.FilterSelector(filter=models.Filter(must=must_conditions)),
         )
+
+    async def delete_by_any(
+        self,
+        collection: str,
+        key: str,
+        values: list[str],
+    ) -> None:
+        # MatchAny, not MatchValue: the cache's `chunk_ids` payload field is an
+        # array, and MatchValue cannot match a value *inside* one (M6 D2).
+        #
+        # The empty guard is load-bearing, not defensive. An empty `any=[]` leaves
+        # a filter with no effective condition, and Filter(must=[]) selects EVERY
+        # point in the collection — so a zero-chunk document would wipe the whole
+        # cache instead of invalidating nothing. Returning before the client call
+        # is the only shape that cannot express that.
+        if not values:
+            return
+
+        await self._client.delete(
+            collection_name=collection,
+            points_selector=models.FilterSelector(
+                filter=models.Filter(
+                    must=[
+                        models.FieldCondition(key=key, match=models.MatchAny(any=values)),
+                    ]
+                )
+            ),
+        )
+
+    async def get_chunk_ids_for_document(
+        self,
+        collection: str,
+        document_id: str,
+    ) -> list[str]:
+        """Retrieve all point IDs associated with a document. Used for cache invalidation."""
+        result = await self._client.scroll(
+            collection_name=collection,
+            scroll_filter=models.Filter(
+                must=[models.FieldCondition(key="document_id", match=models.MatchValue(value=document_id))]
+            ),
+            limit=1000,
+            with_payload=False,
+        )
+        return [point.id for point in result[0]]

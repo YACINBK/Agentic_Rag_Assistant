@@ -34,8 +34,47 @@ _FALLBACK_HTML = (
     "in the available documents to answer your question.</p></div>"
 )
 
+# Progress label per pipeline node, keyed by the LangGraph node name registered in
+# app/pipeline/graph.py:65-73. Emitted when the node STARTS, so the line always
+# names work in flight rather than work already finished.
+#
+# Sourced from `stream_mode="debug"`, whose `type: "task"` events fire at task
+# schedule time. Deliberately not derived from `stream_mode="updates"` (which
+# fires on node *completion*): mapping completion → "what runs next" would have to
+# re-derive the conditional routing at graph.py:80-111 — cache hit, DIRECT, and
+# the gate's pass/retry/exhausted fork — in a second place that could drift from
+# the graph. Node-start events need no routing knowledge at all.
+#
+# This does NOT relax §12. What streams here is the name of the stage; the answer
+# stays buffered until FAITHFUL, and is still emitted as one `answer` event below.
+# The route already sent an SSE progress frame before the pipeline ran, so §12's
+# boundary was never "no SSE at all before the verdict" — it is "no answer".
+_STAGE_LABELS: dict[str, str] = {
+    "cache_check": "Checking for a cached answer&hellip;",
+    "classifier": "Understanding the question&hellip;",
+    "rewriter": "Refining the search query&hellip;",
+    "qdrant_search": "Searching indexed documents&hellip;",
+    "reranker": "Ranking passages by relevance&hellip;",
+    "relevance_gate": "Weighing whether the evidence is strong enough&hellip;",
+    "retry": "Retrying with a broader query&hellip;",
+    "generator": "Composing the answer&hellip;",
+    "faithfulness": "Verifying every claim against the sources&hellip;",
+}
+
 # A bracketed run of digits — the [N] citation marker the generator emits.
 _MARKER_RE = re.compile(r"\[(\d+)\]")
+
+# The ingestion-internal image anchor: chunk.py writes " [[image:<sha256>]] " into
+# the chunk TEXT so the enricher can locate figures. It is not meant for humans and
+# must never surface in the UI. It is stripped HERE — the single place chunk text is
+# rendered (source_card.html, via the citation macro) — rather than in node 06, whose
+# contract asserts citation.text == chunk.text. The picture still renders: <img> tags
+# come from cite.image_refs, not from this marker. D35.
+_IMAGE_MARKER_RE = re.compile(r"\s*\[\[image:[0-9a-f]{64}\]\]\s*")
+
+
+def _strip_image_markers(text: str) -> str:
+    return _IMAGE_MARKER_RE.sub(" ", text).strip()
 
 
 def markup_answer(answer: str, citations: list[dict]) -> Markup:
@@ -51,7 +90,10 @@ def markup_answer(answer: str, citations: list[dict]) -> Markup:
     """
     escaped = str(escape(answer))
     citation_macro = templates.get_template("components/citation.html").module.citation
-    by_index = {cite["index"]: str(citation_macro(cite)) for cite in citations}
+    by_index = {
+        cite["index"]: str(citation_macro({**cite, "text": _strip_image_markers(cite["text"])}))
+        for cite in citations
+    }
 
     def _replace(match: re.Match) -> str:
         rendered = by_index.get(int(match.group(1)))
@@ -110,9 +152,13 @@ async def search_stream(
             yield {"event": "done", "data": ""}
             return
 
+        # Neutral opener, not a stage name: it covers only the window before the
+        # first node starts (pipeline compile on a cold call). `cache_check`
+        # replaces it within milliseconds, so wording it as a stage — the old
+        # "Searching documents…" — read as the progress line rewinding.
         yield {
             "event": "progress",
-            "data": '<div class="progress">Searching documents&hellip;</div>',
+            "data": '<div class="progress">Starting&hellip;</div>',
         }
 
         state: PipelineState = {
@@ -123,9 +169,25 @@ async def search_stream(
             "user_is_admin": user.is_admin,
         }
 
+        # `astream` over `ainvoke` purely so the stage line can advance while the
+        # pipeline runs — a single `await` cannot yield, which is why one static
+        # "Searching documents…" used to sit there for the whole 2–4s+ (longer on a
+        # 32b generator). `values` carries the accumulated state, so the last one
+        # is exactly what `ainvoke` would have returned; `debug` carries the
+        # node-start events that drive _STAGE_LABELS. Nothing from a node's own
+        # payload is ever emitted — only the label for its name (§12).
+        result: PipelineState = {}
         try:
             pipeline = get_compiled_pipeline(settings)
-            result = await pipeline.ainvoke(state)
+            async for mode, payload in pipeline.astream(state, stream_mode=["debug", "values"]):
+                if mode == "values":
+                    result = payload
+                    continue
+                if payload.get("type") != "task":
+                    continue
+                label = _STAGE_LABELS.get(payload.get("payload", {}).get("name", ""))
+                if label:
+                    yield {"event": "progress", "data": f'<div class="progress">{label}</div>'}
         except Exception as e:
             yield {
                 "event": "error",

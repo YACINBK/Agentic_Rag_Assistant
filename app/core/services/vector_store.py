@@ -47,3 +47,19 @@ class BaseVectorStore(ABC):
     ) -> None:
         """Delete points matching filter conditions."""
         ...
+
+    @abstractmethod
+    async def delete_by_any(
+        self,
+        collection: str,
+        key: str,
+        values: list[str],
+    ) -> None:
+        """Delete points whose payload `key` matches ANY of `values`.
+
+        Distinct from delete_by_filter, which builds MatchValue only and therefore
+        cannot match a value *inside* a payload array (M6 D2). The semantic cache's
+        `chunk_ids` is such an array, so MatchValue against it would match nothing
+        and report success — a silent no-op where a deletion was required.
+        """
+        ...

@@ -16,6 +16,7 @@ from app.ingestion.chunk import chunk_bookstack_html
 from app.ingestion.enrich import enrich_chunks
 from app.ingestion.extract import extract_bookstack_html
 from app.ingestion.index import index_chunks
+from app.ingestion.invalidate import invalidate_cache_for_chunks
 
 logger = get_logger(__name__)
 
@@ -98,6 +99,17 @@ async def orchestrate_ingestion(
             restricted=record.restricted,
             doc_hash=record.doc_hash,
             embedder=embedder,
+            vector_store=vector_store,
+        )
+
+        # Stage G — §9: stale cache entries die after the new points are written
+        # and before the document is marked done. Inside the try on purpose: a
+        # failure here must mark the document failed rather than reach `done`,
+        # because "marked done with a stale entry still servable" is silent and
+        # "marked failed" is loud and re-triggerable (M6 assertions 9-10).
+        stage = "invalidate"
+        await invalidate_cache_for_chunks(
+            index_result.chunk_ids,
             vector_store=vector_store,
         )
 

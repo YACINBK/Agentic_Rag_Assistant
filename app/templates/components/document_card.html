@@ -1,0 +1,26 @@
+<div class="document-card status-{{ document.ingestion_status }}">
+    <div class="document-card-header">
+        <span class="document-filename">{{ document.original_filename }}</span>
+        <span class="document-status badge status-{{ document.ingestion_status }}">{{ document.ingestion_status }}</span>
+    </div>
+    <div class="document-card-meta">
+        <span class="document-category">{{ document.category }}</span>
+        {% if document.restricted %}<span class="document-restricted badge">Restricted</span>{% endif %}
+        {% if document.chunk_count %}<span class="document-chunks">{{ document.chunk_count }} chunks</span>{% endif %}
+        {% if document.last_ingested_at %}<span class="document-ingested-at">Ingested {{ document.last_ingested_at }}</span>{% endif %}
+    </div>
+    <div class="document-card-actions">
+        {# Reingest mirrors the route's 409 guard: pending/running means a run is
+           already outstanding, so the control is not offered. The guard stays the
+           boundary; this only avoids offering an action the server must refuse. #}
+        {% if document.ingestion_status not in ("pending", "running") %}
+        <button type="button" class="btn btn-secondary"
+                hx-post="/admin/documents/{{ document.id }}/reingest"
+                hx-swap="none">Re-ingest</button>
+        {% endif %}
+        <button type="button" class="btn btn-danger"
+                hx-delete="/admin/documents/{{ document.id }}"
+                hx-confirm="Delete {{ document.original_filename }} and all its indexed data? This cannot be undone."
+                hx-swap="none">Delete</button>
+    </div>
+</div>

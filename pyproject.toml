@@ -43,6 +43,10 @@ dev = [
     "pytest-asyncio>=0.24",
     "pytest-cov>=5.0",
     "ruff>=0.7",
+    # Declared for tests/unit/test_m13_keycloak_realm.py, which parses
+    # docker-compose.yml. It already arrives transitively via uvicorn[standard];
+    # a test that imports it directly should not depend on that staying true.
+    "pyyaml>=6.0",
 ]
 
 [tool.pytest.ini_options]

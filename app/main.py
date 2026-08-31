@@ -1,3 +1,4 @@
+import re
 from contextlib import asynccontextmanager
 
 import redis.asyncio as aioredis
@@ -7,13 +8,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette_csrf import CSRFMiddleware
 
+from app.api.error_handlers import register_error_handlers
+from app.api.routes import admin_router, images_router, onboarding_router, search_router
 from app.core.logging import configure_logging, get_logger
 from app.core.models.base import async_session, engine
 from app.core.settings import settings
-from app.api.error_handlers import register_error_handlers
-from app.api.routes import images_router, search_router
 from app.services import qdrant_bootstrap
-from app.services.auth import KeycloakAuthService, SESSION_COOKIE
+from app.services.auth import SESSION_COOKIE, KeycloakAuthService
 
 configure_logging()
 logger = get_logger(__name__)
@@ -47,7 +48,17 @@ if not settings.DEV_MODE:
         CSRFMiddleware,
         secret=settings.SECRET_KEY,
         sensitive_cookies={SESSION_COOKIE},
-        exempt_urls=["/auth/callback"],
+        # COMPILED patterns, not strings. starlette_csrf types this
+        # `Optional[List[Pattern]]` and `_url_is_exempt` calls
+        # `exempt_url.match(url.path)` — a plain str raises
+        # `AttributeError: 'str' object has no attribute 'match'`. And it raises on
+        # EVERY unsafe-method request carrying a session cookie, because the guard
+        # short-circuits as `method not in safe_methods and not _url_is_exempt(...)`:
+        # GETs never reach it, so this stayed invisible in dev (DEV_MODE=true skips
+        # this whole block) while every POST would have 500'd in production —
+        # POST /search included. Caught by M7's CSRF test, which is the only suite
+        # that attaches this middleware.
+        exempt_urls=[re.compile(r"^/auth/callback$")],
     )
 else:
     logger.warning(
@@ -58,6 +69,8 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(search_router)
 app.include_router(images_router)
+app.include_router(admin_router)
+app.include_router(onboarding_router)
 
 if settings.DEV_MODE:
     # Imported inside the branch, not at module level: app/api/routes/dev.py is
@@ -81,7 +94,14 @@ async def health():
 
 @app.get("/auth/login", name="login_page")
 async def login_page(request: Request):
-    return templates.TemplateResponse(request, "pages/login.html")
+    """Bounce to the public landing — this route no longer renders a page.
+
+    It must keep existing under this name and path: Keycloak's registered
+    post_logout_redirect_uri points here (the realm whitelists /auth/login),
+    and the auth error handlers redirect expired sessions to it. Both converge
+    on the landing page at `/`, which carries the Login button.
+    """
+    return RedirectResponse(url="/")
 
 
 @app.get("/auth/start")
@@ -97,14 +117,15 @@ async def auth_callback(request: Request):
     async with async_session() as db:
         auth_service = KeycloakAuthService(db=db, redis=request.app.state.redis)
         try:
-            await auth_service.handle_callback(request)
+            user_session = await auth_service.handle_callback(request)
             await db.commit()
         except Exception:
             await db.rollback()
             raise
 
     session_id = request.state.session_id
-    response = RedirectResponse(url="/", status_code=303)
+    target = "/" if user_session.role_confirmed else "/onboarding/role"
+    response = RedirectResponse(url=target, status_code=303)
     response.set_cookie(
         key=SESSION_COOKIE,
         value=session_id,
@@ -153,6 +174,9 @@ async def index(request: Request):
     if not user:
         if settings.DEV_MODE:
             return RedirectResponse(url="/dev/login")
-        return RedirectResponse(url="/auth/login")
+        # The public landing: the first thing a visitor sees, with the Login
+        # button as the OIDC entry point. No redirect to a login page — the
+        # app is the entry, auth is one click inside it.
+        return templates.TemplateResponse(request, "pages/landing.html")
 
     return templates.TemplateResponse(request, "pages/dashboard.html", {"user": user})

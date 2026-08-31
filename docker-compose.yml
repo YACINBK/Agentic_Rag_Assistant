@@ -92,16 +92,25 @@ services:
       - qdrant_data:/qdrant/storage
 
   # ── Keycloak (OIDC / SSO) ──
+  # `--import-realm` reads every file under /opt/keycloak/data/import/ at startup.
+  # It SKIPS a realm that already exists, so on a stale keycloak_data volume the
+  # import looks broken when it is simply declining to overwrite. `docker compose
+  # down -v` is what forces a re-import — and it also wipes postgres and qdrant,
+  # so run it deliberately, not as a debugging reflex.
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - "8080:8080"
     volumes:
+      # Both mounts apply: the bind path is deeper than the volume path, and
+      # docker resolves overlapping mounts by path depth. Removing keycloak_data
+      # would make every restart lose the realm's runtime state.
       - keycloak_data:/opt/keycloak/data
+      - ./deploy/keycloak/whitecape-realm.json:/opt/keycloak/data/import/whitecape-realm.json:ro
 
   # ── Ollama (local LLM + BGE-M3 embeddings) ──
   ollama:
@@ -120,12 +129,23 @@ services:
 
   # ── Reranker (bge-reranker-v2-m3 via Hugging Face TEI, CPU) ──
   reranker:
-    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
+    # GPU build: 89 = CUDA compute capability 8.9 (Ada Lovelace = RTX 4060).
+    # The cpu-latest image ran the cross-encoder on CPU at ~3.8s/passage, capped at
+    # batch 4 by the Candle backend — ~38s for 10 chunks, the pipeline's biggest cost.
+    # Requires nvidia-container-toolkit on the host + the deploy.devices block below.
+    image: ghcr.io/huggingface/text-embeddings-inference:89-latest
     command: --model-id BAAI/bge-reranker-v2-m3 --port 8082
     ports:
       - "8082:8082"
     volumes:
       - tei_cache:/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
 volumes:
   pg_data:

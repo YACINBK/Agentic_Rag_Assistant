@@ -124,6 +124,25 @@ def test_answer_with_no_citations_renders_cleanly() -> None:
     assert "A plain answer with no citations." in html
 
 
+def test_card_strips_ingestion_image_marker_but_keeps_the_image() -> None:
+    """chunk.py writes ' [[image:<sha256>]] ' into chunk text as an anchor for the
+    enricher. It is not prose and must never reach a reader — 411 of the corpus's 470
+    chunks carry it, so nearly every card is affected. The <img> is driven by
+    image_refs, so stripping the token must not cost the picture. D35.
+    """
+    digest = "4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6"
+    cite = make_citation(
+        text=f"Ouvrez le menu. [[image:{digest}]] Puis validez.",
+        image_refs=[{"image_id": digest, "anchor": "bkmrk-1"}],
+    )
+
+    html = str(markup_answer("Voir [1].", [cite]))
+
+    assert "[[image:" not in html
+    assert "Ouvrez le menu. Puis validez." in html
+    assert f"/documents/doc-1/images/{digest}" in html
+
+
 def test_base_links_component_stylesheet() -> None:
     """The card is hidden by CSS ([x-cloak]) until Alpine boots. An unlinked
     stylesheet renders every card expanded on load — markup all present, so no

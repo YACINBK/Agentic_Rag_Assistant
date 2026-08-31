@@ -7,13 +7,65 @@ import uuid
 from pathlib import Path
 
 import pytest
+from sqlalchemy.engine.url import make_url
 
 from app.core.security import BaseAuthService, UserSession
 from app.core.services.embedder import BaseEmbedder
 from app.core.services.llm import BaseLLMService
 from app.core.services.reranker import BaseReranker
 from app.core.services.vector_store import BaseVectorStore
+from app.core.settings import settings
 from app.core.state import ChunkPayload, PipelineState
+
+# ---------------------------------------------------------------------------
+# Integration-test database guard
+# ---------------------------------------------------------------------------
+
+
+def require_test_database_url(suite: str) -> str:
+    """Return TEST_DATABASE_URL, skipping if unset and failing if it is the dev DB.
+
+    Every integration fixture that runs `alembic downgrade base` must call this
+    first. Downgrade drops every table, so aiming it at the development database
+    destroys it silently — the suite still passes.
+
+    Compares DATABASE NAMES, not URL strings. The previous guard was
+    `if test_url == str(settings.DATABASE_URL)`, which a difference in spelling
+    defeats while both URLs still address the same physical database:
+
+        settings.DATABASE_URL = ...@postgres:5432/whitecape    # .env, container name
+        TEST_DATABASE_URL     = ...@localhost:5432/whitecape   # host-side tooling
+
+    Those strings are unequal, so the old guard passed — and then wiped the dev
+    schema. That configuration was live in this repo until `.env.local` landed
+    (see its header), so this is a latent hazard that was actually reachable, not
+    a hypothetical one. `127.0.0.1` vs `localhost`, an added `?ssl=` query, and a
+    `postgresql://` vs `postgresql+asyncpg://` driver prefix defeat it the same way.
+
+    Comparing names alone is sufficient and needs no knowledge of which hostnames
+    happen to resolve to the same server: if the names differ, they are different
+    databases on any host; if they match, refuse regardless of how the host is
+    spelled. Distinct names are the only thing that actually separates them.
+    """
+    test_url = os.environ.get("TEST_DATABASE_URL")
+    if not test_url:
+        pytest.skip(f"TEST_DATABASE_URL not set — {suite} integration tests skipped")
+
+    test_db = make_url(test_url).database
+    dev_db = make_url(str(settings.DATABASE_URL)).database
+
+    if not test_db:
+        pytest.fail(f"TEST_DATABASE_URL names no database: {test_url!r}")
+
+    if test_db == dev_db:
+        pytest.fail(
+            f"TEST_DATABASE_URL and settings.DATABASE_URL both name the database "
+            f"{test_db!r}. These tests run `alembic downgrade base`, which would "
+            f"drop every table in the development database. Point TEST_DATABASE_URL "
+            f"at a distinct database name (e.g. {dev_db}_test)."
+        )
+
+    return test_url
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +168,11 @@ class MockVectorStore(BaseVectorStore):
         self.search_calls: list[dict] = []
         self.upsert_calls: list[dict] = []
         self.delete_calls: list[dict] = []
+        # A NEW list, not a shared one: delete_by_any is a different operation from
+        # delete_by_filter, and folding both into delete_calls would silently change
+        # what every prior test's `delete_calls == []` assertion means (M6 mock
+        # contract, additive only — the rule MockRedis was extended under).
+        self.delete_by_any_calls: list[dict] = []
 
     async def search(
         self,
@@ -141,6 +198,11 @@ class MockVectorStore(BaseVectorStore):
 
     async def delete_by_filter(self, collection: str, filter_conditions: dict) -> None:
         self.delete_calls.append({"collection": collection, "filter": filter_conditions})
+
+    async def delete_by_any(self, collection: str, key: str, values: list[str]) -> None:
+        self.delete_by_any_calls.append(
+            {"collection": collection, "key": key, "values": values}
+        )
 
 
 class MockReranker(BaseReranker):
@@ -263,6 +325,10 @@ class MockRedis:
     def __init__(self, data: dict[str, str] | None = None):
         self._store: dict[str, str] = data or {}
         self._ttls: dict[str, int] = {}
+        # Set keyspace (M9): user_sessions:{user_id} reverse index. Kept separate
+        # from _store so the string store stays a string store — get/setex types
+        # are unchanged.
+        self._sets: dict[str, set[str]] = {}
 
     async def get(self, key: str) -> str | None:
         return self._store.get(key)
@@ -274,9 +340,39 @@ class MockRedis:
     async def delete(self, key: str) -> None:
         self._store.pop(key, None)
         self._ttls.pop(key, None)
+        # Real DEL removes a key whatever its type, and purge_user_sessions
+        # deletes the reverse-index set by key. No pre-M9 test puts anything in
+        # _sets, so behaviour for every existing caller is unchanged.
+        self._sets.pop(key, None)
 
     async def aclose(self) -> None:
         pass
+
+    # --- Set commands (M9, additive) ---
+
+    async def sadd(self, key: str, *values: str) -> int:
+        members = self._sets.setdefault(key, set())
+        before = len(members)
+        members.update(values)
+        return len(members) - before
+
+    async def smembers(self, key: str) -> set[str]:
+        # A copy: callers iterate while deleting keys (purge_user_sessions).
+        return set(self._sets.get(key, set()))
+
+    async def srem(self, key: str, *values: str) -> int:
+        members = self._sets.get(key)
+        if not members:
+            return 0
+        removed = len(members & set(values))
+        members.difference_update(values)
+        return removed
+
+    async def expire(self, key: str, ttl: int) -> bool:
+        # Records the TTL without enforcing it — nothing in the suite advances
+        # time, and an enforcing mock would make tests depend on wall clock.
+        self._ttls[key] = ttl
+        return True
 
 
 # ---------------------------------------------------------------------------
@@ -292,6 +388,10 @@ def make_user_session(**overrides) -> UserSession:
         "role": "developer",
         "is_admin": False,
         "is_owner": False,
+        # True — the common case for every test that predates M9b: a user whose
+        # role has been decided. A first-login user (role_source="default") is the
+        # exception and passes role_confirmed=False explicitly.
+        "role_confirmed": True,
     }
     defaults.update(overrides)
     return UserSession(**defaults)
@@ -307,6 +407,11 @@ def make_user_model(**overrides):
         "role_id": uuid.uuid4(),
         "is_admin": False,
         "is_owner": False,
+        # Explicit rather than left to the column's server_default: an unflushed
+        # or freshly flushed model reads None for a server-default column, and
+        # `role_source != "default"` would then report an unconfirmed user as
+        # confirmed. Tests that want the confirmed case pass "admin_assigned".
+        "role_source": "default",
     }
     defaults.update(overrides)
     return User(**defaults)

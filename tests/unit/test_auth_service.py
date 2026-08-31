@@ -37,6 +37,8 @@ def _make_user_row(**overrides) -> SimpleNamespace:
         "role_id": uuid.uuid4(),
         "is_admin": False,
         "is_owner": False,
+        "role_source": "admin_assigned",
+        "role": SimpleNamespace(name="developer"),
     }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
@@ -68,13 +70,17 @@ def _make_request(
 
 
 def _make_db(role=None, user=None) -> AsyncMock:
-    """AsyncSession mock: two execute() calls — first Role, then User."""
+    """AsyncSession mock: User is selected first, Role only on the new-user path.
+
+    Order-based, so it drifts the moment the service's query order changes — which
+    is what M9b did (the Role lookup used to come first). See D41.
+    """
     db = AsyncMock()
     role_result = MagicMock()
     role_result.scalar_one_or_none.return_value = role
     user_result = MagicMock()
     user_result.scalar_one_or_none.return_value = user
-    db.execute.side_effect = [role_result, user_result]
+    db.execute.side_effect = [user_result, role_result]
     return db
 
 
@@ -118,6 +124,7 @@ class TestGetAuthorizationUrl:
         db = _make_db()
         with (
             patch.object(settings, "KEYCLOAK_URL", "http://keycloak:8080"),
+            patch.object(settings, "KEYCLOAK_PUBLIC_URL", "http://localhost:8080"),
             patch.object(settings, "KEYCLOAK_REALM", "whitecape"),
         ):
             service = KeycloakAuthService(db=db, redis=redis)
@@ -129,10 +136,13 @@ class TestGetAuthorizationUrl:
         with patch(
             "app.services.auth.AsyncOAuth2Client",
             return_value=_mock_oauth_client(url=expected_url),
-        ):
+        ) as oauth_client:
             url = await service.get_authorization_url(_make_request())
 
         assert "/realms/whitecape/protocol/openid-connect/auth" in url
+        oauth_client.return_value.create_authorization_url.assert_called_once()
+        endpoint = oauth_client.return_value.create_authorization_url.call_args.args[0]
+        assert endpoint.startswith("http://localhost:8080/")
 
     @pytest.mark.asyncio
     async def test_authorization_url_stores_state_in_redis(self) -> None:
