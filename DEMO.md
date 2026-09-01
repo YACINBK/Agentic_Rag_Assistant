@@ -25,9 +25,21 @@ State after the reset (this is what each module expects):
 | `user.one` / `whitecape` | default | false | role picker |
 | `user.two` / `whitecape` | default | false | role picker |
 
-Corpus: `askgo` (477 chunks), `onboarding`, `remuneration` (**restricted**),
-`qualite-tests` — all `done`. `deploiement` is **not ingested** on purpose: it
-is the live upload in M3.
+Corpus before the room: `askgo` (477 chunks), `onboarding`, `qualite-tests` —
+all `done` and **unrestricted**; `remuneration` is `done` and **restricted**
+(the §5 demo's only restricted document). `deploiement` is **deleted before the
+room** — it is the live upload in M3 (delete it the day before with the
+Documents page's Delete button if it's present). Verify — a wrongly ticked
+*restricted* box on upload silently turns plain-user queries into declines,
+exactly like the §5 demo (found 2026-09-01: deploiement had been uploaded
+restricted and every "any user" technical query died):
+
+```bash
+docker compose exec -T postgres psql -U whitecape -d whitecape -t -A -c \
+  "SELECT original_filename, ingestion_status, restricted FROM document ORDER BY 1;"
+#   expect before the room: askgo/onboarding/qualite | f, remuneration | t, no deploiement
+#   expect after M3: deploiement | done | f as well
+```
 
 Browser setup: **Browser A** = owner.demo. **Browser B** (incognito or a second
 browser) = user.one from M5 on.
@@ -112,15 +124,20 @@ citations that prove it."
 
 **DO (Browser A):** Search page, ask:
 
-> **Quelles sont les étapes de la procédure de déploiement ?**
+> **Comment generer une demande de reapprovisionnement ?**
 
-**EXPECT:** progress lines → streamed French answer with inline `【N】`
-citations → source card. ~20–60 s (first query after boot is the slow one —
-warm it up before the room if you can).
+**EXPECT:** progress lines → streamed French answer with inline citation
+pills → source card. ~10–30 s (first query after boot is the slow one — warm
+it up before the room if you can). This is the flagship query: the Ask&Go
+corpus, the richest citations, and it has answered on every verified run.
 
-**Beat 2 — it refuses to invent:** ask *"Quelle est la politique de télétravail
+**Beat 2 — repeat it:** ask the exact same question again → **~1 second**,
+same citations, same images — the semantic cache (M10). One question, two
+features.
+
+**Beat 3 — it refuses to invent:** ask *"Quelle est la politique de télétravail
 chez Whitecape ?"* → **declined** ("insufficient information") — that's the
-faithfulness checker, not a failure.
+honesty boundary, not a failure.
 
 More pre-screened queries (all verified) are in the table at the end.
 
@@ -173,25 +190,42 @@ click **Logout**.
 
 ---
 
-## Pre-screened queries (verified)
+## Pre-screened queries — re-verified 2026-09-01 under the live stack
 
-| Ask this | As | Result |
-|---|---|---|
-| Quelles sont les étapes de la procédure de déploiement ? | any | answered, 12 cites |
-| Comment generer une demande de reapprovisionnement ? | any | answered, cited (Ask&Go corpus) |
-| Combien de jours de congés par an et quel préavis pour une demande ? | any | answered, 3 cites |
-| À quelles heures le badge d'accès fonctionne-t-il et pour quels étages ? | any | answered, 2 cites |
-| Quel port utilise la base de données PostgreSQL ? | any | answered, 1 cite |
-| Quand déclenche-t-on un retour arrière et en combien de temps ? | any | answered, 2 cites |
-| Quels sont les niveaux de gravité des anomalies et les délais de correction ? | any | answered, 2 cites |
-| Quelle couverture de test est attendue ? | any | answered, 3 cites |
-| Quelle est la grille salariale pour la filière développement ? | **admin** | answered, 6 cites — M5 |
-| Quelle est la grille salariale pour la filière développement ? | **plain** | **declined** — M5 |
-| À combien s'élève la prime de cooptation ? | **admin / plain** | answered / declined |
-| Quelle est la politique de télétravail chez Whitecape ? | any | **declined** — refuses to invent |
+The 2026-08-26 table died with the model switch: the rewriter is an LLM, so
+boundary queries flip around the relevance gate. Everything below was re-run
+**twice on the full path** (cache purged between rounds) plus the earlier
+screening — only queries that answered every observed run are listed as safe.
 
-**Do not ask** *"Sur quels ports écoutent les services ?"* — that phrasing
-scores under the relevance gate. Name a specific thing, don't ask generically.
+**The demo set — ask these:**
+
+| Ask this | As | Result (observed) | Module |
+|---|---|---|---|
+| Comment generer une demande de reapprovisionnement ? | any | answered, every run — flagship | M4 |
+| *(same question again)* | any | **~1 s cache hit**, citations intact | M4 beat 2 |
+| Quelle est la politique de télétravail chez Whitecape ? | any | **declined** — refuses to invent | M4 beat 3 |
+| Quelle est la grille salariale pour la filière développement ? | **admin** | answered, every run | M5 |
+| Quelle est la grille salariale pour la filière développement ? | **plain** | **declined** — the §5 demo | M5 |
+| À combien s'élève la prime de cooptation ? | **admin** | answered, every run | M5 backup |
+| À combien s'élève la prime de cooptation ? | **plain** | **declined** | M5 backup |
+| Quelle couverture de test est attendue ? | any | answered, every run | extra |
+| Quels sont les niveaux de gravité des anomalies et les délais de correction ? | any | answered, every run | extra |
+
+**Backup tier** (answered 3 of 4 observed runs — one flip; usable only
+AFTER M3's live upload re-ingests deploiement):
+*Quelles sont les étapes de la procédure de déploiement ?*
+
+**Do NOT ask** — verified dead under the current models (declined on every
+observed run; all were "answered" in the old table): *congés par an*, *badge
+d'accès*, *port de PostgreSQL*, *retour arrière*, *Sur quels ports écoutent les
+services ?*. The rewrite nondeterminism sits these right on the relevance gate.
+If you want one of them anyway, warm it up out of sight first — a success
+caches it for 24 h.
+
+**Cache hygiene for demo day:** the semantic cache TTL is 24 h. Entries written
+today expire before Thursday — run each demo query once out of sight right
+before the room (that also pre-warms the slow first-boot path), then the
+in-room repeats are the 1-second hits.
 
 ## If everything is on fire — the 3-minute minimum
 
