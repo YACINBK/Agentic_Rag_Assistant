@@ -122,6 +122,15 @@ means the worker holds it, `done` means Qdrant holds the points.
 **SAY:** "Every answer is grounded in indexed documents — streamed with the
 citations that prove it."
 
+> **How retrieval picks its sources (if asked):** every query searches the
+> WHOLE corpus — all 489 chunks from every ingested document — through the
+> vector index, minus whatever the role filter removes. The cross-encoder then
+> ranks the candidates, and only the best survive. Domain questions landing on
+> one document is correctness, not a limitation: this corpus is
+> domain-partitioned (salary facts live only in remuneration, QA levels only in
+> qualite). Ask a question that spans two domains — see the multi-document
+> queries in the table — and the answer cites both files in one go.
+
 **DO (Browser A):** Search page, ask:
 
 > **Comment generer une demande de reapprovisionnement ?**
@@ -210,6 +219,27 @@ screening — only queries that answered every observed run are listed as safe.
 | À combien s'élève la prime de cooptation ? | **plain** | **declined** | M5 backup |
 | Quelle couverture de test est attendue ? | any | answered, every run | extra |
 | Quels sont les niveaux de gravité des anomalies et les délais de correction ? | any | answered, every run | extra |
+
+**Ask&Go breadth** (verified 2/2 each — four different sections of the 477-chunk
+corpus, citations every run; shows the big document is deep, not one blob):
+
+| Ask this | Result (observed) |
+|---|---|
+| Comment se connecter à Ask&Go via une plateforme SSO ? | answered, 13 cites — *Authentification > SSO/SAML* |
+| Comment copier une commande dans Ask&Go ? | answered, 8–9 cites — *Commandes > Copier* |
+| Comment créer un contrat ? | answered, 7 cites — *Contrat > Créer* |
+| Comment modifier des factures en masse ? | answered, 4 cites — *Factures > Modification en masse* |
+
+**Multi-document queries** (verified 2/2 each — the answer cites BOTH files;
+use one when the room asks "does it only ever read one document?"):
+
+| Ask this | Documents cited |
+|---|---|
+| Quels sont les niveaux de gravité des anomalies et les seuils de retour arrière ? | **qualite-tests + deploiement** |
+| Quelle est la couverture de test attendue et quelles sont les étapes de la procédure de déploiement ? | **qualite-tests + deploiement** |
+
+(Both multi-doc queries need deploiement ingested — ask them **after M3**, or
+restore the corpus state above first.)
 
 **Backup tier** (answered 3 of 4 observed runs — one flip; usable only
 AFTER M3's live upload re-ingests deploiement):
