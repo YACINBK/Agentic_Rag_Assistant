@@ -42,6 +42,12 @@ REALM_ACCOUNTS = (
 # The account whose admin flag is reset so the grant can be performed live.
 GRANT_DEMO_TARGET = "admin@whitecape.fr"
 
+# Canonical demo state: ONLY the owner holds flags. Any admin granted during
+# manual testing (observed 2026-09-01: user.one had is_admin from a live grant
+# exploration, which silently broke the §5 "plain user" demo side) is cleared.
+# The owner is structurally excluded — guarded by email, §2/§12.
+FLAG_RESET_TARGETS = ("admin@whitecape.fr", "user.one@whitecape.fr", "user.two@whitecape.fr")
+
 
 async def plan() -> list[tuple[str, str, str, str]]:
     async with async_session() as session:
@@ -85,13 +91,14 @@ async def apply(reset_admin: bool) -> None:
             .where(User.email.in_(REALM_ACCOUNTS))
             .values(role_source=ROLE_SOURCE_DEFAULT, role_id=role.id)
         )
-        # 2. The M9d grant target loses is_admin (never the owner — guarded by
-        #    email, not by flag, so the owner account is structurally out of
-        #    reach of this statement).
+        # 2. Canonical flags: every non-owner account loses is_admin (the
+        #    owner is guarded by email, not by flag, so it is structurally out
+        #    of reach of this statement). Manual-testing grants left behind
+        #    would silently flip the §5 demo's "plain user" into an admin.
         if reset_admin:
             await session.execute(
                 update(User)
-                .where(User.email == GRANT_DEMO_TARGET)
+                .where(User.email.in_(FLAG_RESET_TARGETS))
                 .values(is_admin=False)
             )
         await session.commit()
@@ -134,10 +141,10 @@ async def main() -> None:
     print(f"  1. role_source -> '{ROLE_SOURCE_DEFAULT}' for {len(users)} account(s)"
           " (role picker returns on next login)")
     if not args.keep_admin_grant:
-        print(f"  2. {GRANT_DEMO_TARGET}: is_admin -> False (grant it live via the"
-              " Users page — M9d module)")
+        print(f"  2. is_admin -> False for {', '.join(FLAG_RESET_TARGETS)}"
+              " (grant admin.demo live via the Users page — M9d module)")
     else:
-        print(f"  2. {GRANT_DEMO_TARGET}: is_admin left as-is (--keep-admin-grant)")
+        print("  2. admin flags left as-is (--keep-admin-grant)")
     print("  3. Redis flushall — every session cleared, all logins start fresh")
     print("  Owner flags are NEVER touched (deployment-seeded, §2/§12).")
 
