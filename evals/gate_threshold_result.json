@@ -1,0 +1,458 @@
+{
+  "version": 1,
+  "completed_at": "2026-10-09",
+  "question": "What RELEVANCE_THRESHOLD maximizes gate correctness? Codex swept CONTEXT_PRUNE_THRESHOLD with the gate pinned at 0.5 and reported gate_specificity: null, so the gate value itself was never evaluated.",
+  "method": "Offline recomputation of max(reranked score) >= T over the frozen 2026-10-07 candidate snapshots. No re-retrieval, so model revisions cannot shift the numbers. Positives from the existing provisional reviews; negatives from evals/answerability_labels.json, established from authorized source documents.",
+  "current_threshold": 0.5,
+  "recommended_threshold": 0.1,
+  "perfect_on_development": [
+    0.5,
+    0.4,
+    0.3,
+    0.2,
+    0.1
+  ],
+  "perfect_on_held_out": [
+    0.1,
+    0.05,
+    0.02
+  ],
+  "perfect_on_both": [
+    0.1
+  ],
+  "selection_rule": "The unique threshold scoring sensitivity 1.0 AND specificity 1.0 on both splits. Nearest failure below is 0.05 (development false positive); nearest above is 0.2 (held-out false negative).",
+  "defect_resolved": {
+    "case_id": "holdout_issued_equipment",
+    "direct_evidence_top_score": 0.11920292,
+    "at_threshold_0_5": "rejected (false negative)",
+    "at_threshold_0_1": "admitted (true positive)",
+    "note": "This is the case Codex recorded under known_gate_limitation and did not act on. 0.1192 is why 0.1 works and 0.2 does not."
+  },
+  "development": [
+    {
+      "threshold": 0.9,
+      "gate_passes": 8,
+      "confusion": {
+        "true_positive": 8,
+        "false_positive": 0,
+        "true_negative": 4,
+        "false_negative": 2
+      },
+      "sensitivity": 0.8,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.9,
+      "accuracy": 0.8571428571428571,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": [
+        {
+          "id": "purchase_request",
+          "top_score": 0.89312315,
+          "direct_evidence_top_score": null
+        },
+        {
+          "id": "order_copy",
+          "top_score": 0.6426568,
+          "direct_evidence_top_score": null
+        }
+      ]
+    },
+    {
+      "threshold": 0.7,
+      "gate_passes": 9,
+      "confusion": {
+        "true_positive": 9,
+        "false_positive": 0,
+        "true_negative": 4,
+        "false_negative": 1
+      },
+      "sensitivity": 0.9,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.95,
+      "accuracy": 0.9285714285714286,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": [
+        {
+          "id": "order_copy",
+          "top_score": 0.6426568,
+          "direct_evidence_top_score": null
+        }
+      ]
+    },
+    {
+      "threshold": 0.5,
+      "gate_passes": 10,
+      "confusion": {
+        "true_positive": 10,
+        "false_positive": 0,
+        "true_negative": 4,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 1.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.4,
+      "gate_passes": 10,
+      "confusion": {
+        "true_positive": 10,
+        "false_positive": 0,
+        "true_negative": 4,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 1.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.3,
+      "gate_passes": 10,
+      "confusion": {
+        "true_positive": 10,
+        "false_positive": 0,
+        "true_negative": 4,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 1.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.2,
+      "gate_passes": 10,
+      "confusion": {
+        "true_positive": 10,
+        "false_positive": 0,
+        "true_negative": 4,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 1.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.1,
+      "gate_passes": 10,
+      "confusion": {
+        "true_positive": 10,
+        "false_positive": 0,
+        "true_negative": 4,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 1.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.05,
+      "gate_passes": 11,
+      "confusion": {
+        "true_positive": 10,
+        "false_positive": 1,
+        "true_negative": 3,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 0.75,
+      "balanced_accuracy": 0.875,
+      "accuracy": 0.9285714285714286,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.02,
+      "gate_passes": 11,
+      "confusion": {
+        "true_positive": 10,
+        "false_positive": 1,
+        "true_negative": 3,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 0.75,
+      "balanced_accuracy": 0.875,
+      "accuracy": 0.9285714285714286,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.01,
+      "gate_passes": 11,
+      "confusion": {
+        "true_positive": 10,
+        "false_positive": 1,
+        "true_negative": 3,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 0.75,
+      "balanced_accuracy": 0.875,
+      "accuracy": 0.9285714285714286,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    }
+  ],
+  "held_out": [
+    {
+      "threshold": 0.9,
+      "gate_passes": 9,
+      "confusion": {
+        "true_positive": 9,
+        "false_positive": 0,
+        "true_negative": 2,
+        "false_negative": 3
+      },
+      "sensitivity": 0.75,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.875,
+      "accuracy": 0.7857142857142857,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": [
+        {
+          "id": "holdout_request_order_button",
+          "top_score": 0.8062431,
+          "direct_evidence_top_score": null
+        },
+        {
+          "id": "holdout_replacement_identity",
+          "top_score": 0.5695534,
+          "direct_evidence_top_score": null
+        },
+        {
+          "id": "holdout_issued_equipment",
+          "top_score": 0.11920292,
+          "direct_evidence_top_score": null
+        }
+      ]
+    },
+    {
+      "threshold": 0.7,
+      "gate_passes": 10,
+      "confusion": {
+        "true_positive": 10,
+        "false_positive": 0,
+        "true_negative": 2,
+        "false_negative": 2
+      },
+      "sensitivity": 0.8333333333333334,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.9166666666666667,
+      "accuracy": 0.8571428571428571,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": [
+        {
+          "id": "holdout_replacement_identity",
+          "top_score": 0.5695534,
+          "direct_evidence_top_score": null
+        },
+        {
+          "id": "holdout_issued_equipment",
+          "top_score": 0.11920292,
+          "direct_evidence_top_score": null
+        }
+      ]
+    },
+    {
+      "threshold": 0.5,
+      "gate_passes": 11,
+      "confusion": {
+        "true_positive": 11,
+        "false_positive": 0,
+        "true_negative": 2,
+        "false_negative": 1
+      },
+      "sensitivity": 0.9166666666666666,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.9583333333333333,
+      "accuracy": 0.9285714285714286,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": [
+        {
+          "id": "holdout_issued_equipment",
+          "top_score": 0.11920292,
+          "direct_evidence_top_score": null
+        }
+      ]
+    },
+    {
+      "threshold": 0.4,
+      "gate_passes": 11,
+      "confusion": {
+        "true_positive": 11,
+        "false_positive": 0,
+        "true_negative": 2,
+        "false_negative": 1
+      },
+      "sensitivity": 0.9166666666666666,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.9583333333333333,
+      "accuracy": 0.9285714285714286,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": [
+        {
+          "id": "holdout_issued_equipment",
+          "top_score": 0.11920292,
+          "direct_evidence_top_score": null
+        }
+      ]
+    },
+    {
+      "threshold": 0.3,
+      "gate_passes": 11,
+      "confusion": {
+        "true_positive": 11,
+        "false_positive": 0,
+        "true_negative": 2,
+        "false_negative": 1
+      },
+      "sensitivity": 0.9166666666666666,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.9583333333333333,
+      "accuracy": 0.9285714285714286,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": [
+        {
+          "id": "holdout_issued_equipment",
+          "top_score": 0.11920292,
+          "direct_evidence_top_score": null
+        }
+      ]
+    },
+    {
+      "threshold": 0.2,
+      "gate_passes": 11,
+      "confusion": {
+        "true_positive": 11,
+        "false_positive": 0,
+        "true_negative": 2,
+        "false_negative": 1
+      },
+      "sensitivity": 0.9166666666666666,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.9583333333333333,
+      "accuracy": 0.9285714285714286,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": [
+        {
+          "id": "holdout_issued_equipment",
+          "top_score": 0.11920292,
+          "direct_evidence_top_score": null
+        }
+      ]
+    },
+    {
+      "threshold": 0.1,
+      "gate_passes": 12,
+      "confusion": {
+        "true_positive": 12,
+        "false_positive": 0,
+        "true_negative": 2,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 1.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.05,
+      "gate_passes": 12,
+      "confusion": {
+        "true_positive": 12,
+        "false_positive": 0,
+        "true_negative": 2,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 1.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.02,
+      "gate_passes": 12,
+      "confusion": {
+        "true_positive": 12,
+        "false_positive": 0,
+        "true_negative": 2,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 1.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    },
+    {
+      "threshold": 0.01,
+      "gate_passes": 13,
+      "confusion": {
+        "true_positive": 12,
+        "false_positive": 1,
+        "true_negative": 1,
+        "false_negative": 0
+      },
+      "sensitivity": 1.0,
+      "specificity": 0.5,
+      "balanced_accuracy": 0.75,
+      "accuracy": 0.9285714285714286,
+      "labeled_case_count": 14,
+      "unknown_case_count": 0,
+      "false_negatives": []
+    }
+  ],
+  "label_counts": {
+    "total_labeled": 28,
+    "positives": 22,
+    "negatives": 6,
+    "negatives_absent_from_corpus": 4,
+    "negatives_withheld_by_authorization": 2
+  },
+  "limitations": [
+    "28 labeled cases across both splits. One case flipping moves a rate by roughly 4-8 points; these are directional, not tight estimates.",
+    "Specificity rests on 6 negatives, 2 of which are authorization-scoped rather than corpus-absent.",
+    "Labels are source-grounded by a model, not independently human-validated.",
+    "Both splits draw on the same four indexed documents; this is not document-disjoint generalization.",
+    "Retrieval quality is unchanged - this only moves the admission boundary on already-retrieved candidates.",
+    "Codex pruning sweep was run with the gate at 0.5, so its support-evidence loss figures were computed on the gate-0.5-passing subset."
+  ]
+}

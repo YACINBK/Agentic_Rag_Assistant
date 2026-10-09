@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "status": "frozen_for_offline_holdout",
+  "evaluation_only": true,
+  "created_at": "2026-10-07T14:29:25.265983+00:00",
+  "gate_threshold": 0.5,
+  "context_prune_threshold": 0.001,
+  "held_out_cases_sha256": "d9d65017e3e492508d83cb3aac17e4584f85343ddb0041a184d4afdf51780141",
+  "development_snapshot_sha256": "5b2e56f1e2ee28de669da5cf156b550cc61ea4381f19cb418c54bc53fe8b925e",
+  "development_review_sha256": "6f62ee46e6d70b91f2f462d4135bb5590dbc80c88b1d603c45fd642eb4c5750e",
+  "label_provenance": {
+    "review_kind": "assistant_provisional",
+    "reviewer": "Codex assistant; not a human reviewer",
+    "case_ids": [
+      "contract_creation",
+      "defect_severity",
+      "invoice_bulk_edit",
+      "order_copy",
+      "purchase_request",
+      "referral_admin",
+      "referral_nonadmin",
+      "remote_work",
+      "replenishment",
+      "salary_admin",
+      "salary_nonadmin",
+      "sso_login",
+      "test_coverage",
+      "unsupported_weather"
+    ],
+    "all_cases_reviewed": true,
+    "metrics_scope": "Quality metrics use only labeled cases; answerability may be unknown."
+  },
+  "retrieval_fingerprint": {
+    "collection": "documents",
+    "collection_points": 489,
+    "embedding_model": "bge-m3",
+    "embedding_digest": "7907646426070047a77226ac3e684fbbe8410524f7b4a74d02837e43f2146bab",
+    "reranker": {
+      "model_id": "BAAI/bge-reranker-v2-m3",
+      "model_sha": null,
+      "max_input_length": 8192,
+      "version": "1.9.3"
+    },
+    "search_limit": 10,
+    "corpus_manifest_sha256": "e4ed0d362df01da54522b94842904a16ad5297f526768958ec73b6477c224d6b"
+  },
+  "implementation_fingerprint": {
+    "scripts/evaluate_retrieval.py": "2006b282a7fec3c6134ed1325c95de8735129a3857a9892eabb3db9af635c91b",
+    "app/pipeline/nodes/node_05_relevance_gate.py": "e39776ce157b31626ac2264e8d73d293760c898df3e749b88045e6f7ffb39b88"
+  },
+  "selection_rule": "Reduce context without pruning reviewed useful evidence beyond the baseline gate; not a claim of global optimality.",
+  "development_results": [
+    {
+      "threshold": 0,
+      "gate_passes": 10,
+      "gate_changes": 0,
+      "pinned_evidence_case_count": 0,
+      "pinned_evidence_candidate_hits": 0,
+      "pinned_evidence_context_hits": 0,
+      "context_chunks": 100,
+      "context_characters": 170125,
+      "context_reduction_percent": 0.0,
+      "reviewed_case_count": 14,
+      "reviewed_context_chunks": 100,
+      "reviewed_relevant_pool": 28,
+      "candidate_pool_precision": 0.28,
+      "candidate_pool_recall": 1.0,
+      "direct_evidence_recall": 1.0,
+      "support_evidence_recall": 1.0,
+      "pruned_direct_chunks": 0,
+      "pruned_support_chunks": 0,
+      "answerability_reviewed_count": 10,
+      "answerability_unknown_count": 4,
+      "gate_confusion": {
+        "true_positive": 10,
+        "false_positive": 0,
+        "true_negative": 0,
+        "false_negative": 0
+      },
+      "gate_specificity": null,
+      "gate_accuracy": 1.0
+    },
+    {
+      "threshold": 0.001,
+      "gate_passes": 10,
+      "gate_changes": 0,
+      "pinned_evidence_case_count": 0,
+      "pinned_evidence_candidate_hits": 0,
+      "pinned_evidence_context_hits": 0,
+      "context_chunks": 80,
+      "context_characters": 133347,
+      "context_reduction_percent": 21.61822189566496,
+      "reviewed_case_count": 14,
+      "reviewed_context_chunks": 80,
+      "reviewed_relevant_pool": 28,
+      "candidate_pool_precision": 0.35,
+      "candidate_pool_recall": 1.0,
+      "direct_evidence_recall": 1.0,
+      "support_evidence_recall": 1.0,
+      "pruned_direct_chunks": 0,
+      "pruned_support_chunks": 0,
+      "answerability_reviewed_count": 10,
+      "answerability_unknown_count": 4,
+      "gate_confusion": {
+        "true_positive": 10,
+        "false_positive": 0,
+        "true_negative": 0,
+        "false_negative": 0
+      },
+      "gate_specificity": null,
+      "gate_accuracy": 1.0
+    }
+  ],
+  "limitations": [
+    "Candidate-pool, text-only, development labels; no held-out answer-quality claim.",
+    "Assistant-provisional labels are not human validation.",
+    "Unknown corpus answerability is not a negative label; specificity needs reviewed negatives.",
+    "Reported model metadata is locked; an absent reranker weight revision cannot be verified byte-for-byte.",
+    "This file does not enable application pruning or change environment settings."
+  ]
+}

@@ -20,4 +20,16 @@ class RelevanceGateNode(BaseNode):
             return {**state, "relevance_pass": False}
 
         top_score = max(c["score"] for c in chunks)
-        return {**state, "relevance_pass": top_score >= self._settings.RELEVANCE_THRESHOLD}
+        relevance_pass = top_score >= self._settings.RELEVANCE_THRESHOLD
+        if not relevance_pass or self._settings.CONTEXT_PRUNE_THRESHOLD == 0:
+            return {**state, "relevance_pass": relevance_pass}
+
+        retained = [
+            chunk for chunk in chunks
+            if chunk["score"] >= self._settings.CONTEXT_PRUNE_THRESHOLD
+        ]
+        return {
+            **state,
+            "relevance_pass": True,
+            "reranked_chunks": retained if len(retained) != len(chunks) else chunks,
+        }

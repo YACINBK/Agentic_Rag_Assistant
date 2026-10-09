@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "scope": "Exploratory retrieval-only cases. Fixed query text; no rewriter, semantic cache, generator, or answer-quality evaluation. Cases are not a held-out benchmark.",
+  "cases": [
+    {"id": "replenishment", "query": "Comment générer une demande de réapprovisionnement ?", "role": "developer", "is_admin": false},
+    {"id": "purchase_request", "query": "Comment créer une demande d'achat ?", "role": "developer", "is_admin": false},
+    {"id": "order_copy", "query": "Comment copier une commande dans Ask&Go ?", "role": "developer", "is_admin": false},
+    {"id": "invoice_bulk_edit", "query": "Comment modifier des factures en masse ?", "role": "developer", "is_admin": false},
+    {"id": "contract_creation", "query": "Comment créer un contrat ?", "role": "developer", "is_admin": false},
+    {"id": "sso_login", "query": "Comment se connecter à Ask&Go via une plateforme SSO ?", "role": "developer", "is_admin": false},
+    {"id": "test_coverage", "query": "Quelle couverture de test est attendue ?", "role": "qa_engineer", "is_admin": false},
+    {"id": "defect_severity", "query": "Quels sont les niveaux de gravité des anomalies et les délais de correction ?", "role": "qa_engineer", "is_admin": false},
+    {"id": "salary_admin", "query": "Quelle est la grille salariale pour la filière développement ?", "role": "developer", "is_admin": true},
+    {"id": "salary_nonadmin", "query": "Quelle est la grille salariale pour la filière développement ?", "role": "developer", "is_admin": false},
+    {"id": "referral_admin", "query": "À combien s'élève la prime de cooptation ?", "role": "developer", "is_admin": true},
+    {"id": "referral_nonadmin", "query": "À combien s'élève la prime de cooptation ?", "role": "developer", "is_admin": false},
+    {"id": "remote_work", "query": "Quelle est la politique de télétravail chez Whitecape ?", "role": "developer", "is_admin": false},
+    {"id": "unsupported_weather", "query": "Quel temps fera-t-il demain à Tokyo ?", "role": "developer", "is_admin": false}
+  ]
+}

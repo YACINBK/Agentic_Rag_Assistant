@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "created_at": "2026-10-09",
+  "scope": "Answerability labels for the six cases Codex's 2026-10-07 review left unknown. Establishes each from AUTHORIZED SOURCE DOCUMENTS, not from retrieval failure, which is what the held-out case-set scope requires and what blocked gate-specificity measurement.",
+  "label_provenance": {
+    "review_kind": "source_grounded",
+    "reviewer": "Claude (Planner); not an independent human reviewer",
+    "method": "Extracted full plain text of the three small indexed documents and ran targeted term searches over askgo-621x-fr.html. A label of false requires that no indexed document contains the asked-for fact, or that the only evidence is in a document the §5 filter correctly withholds from this user.",
+    "indexed_corpus": [
+      "askgo-621x-fr.html",
+      "whitecape-onboarding-fr.html",
+      "whitecape-qualite-tests-fr.html",
+      "whitecape-remuneration-fr.html"
+    ],
+    "corpus_caveat": "D8 in contracts/phase4_plan.md says the corpus has 'no HR, no payroll' content. That is NO LONGER TRUE - three Whitecape policy documents are indexed, including a salary grid. D8 must not be used as a labeling basis."
+  },
+  "negative_kinds": {
+    "absent_from_corpus": "No indexed document states the asked-for fact. A correct system must decline.",
+    "withheld_by_authorization": "The fact exists but only in a restricted document. For this user the §5 query-time filter correctly removes it, so no authorized evidence can answer. A correct system must decline, and declining is a positive security result."
+  },
+  "cases": [
+    {
+      "id": "remote_work",
+      "split": "development",
+      "answerable": false,
+      "negative_kind": "absent_from_corpus",
+      "answerability_basis": "No remote-work policy exists in any of the four indexed documents. Searched teletravail / teletravail / remote / distanciel / domicile across all sources; the only 'domicile' occurrence is 'justificatif de domicile' in whitecape-onboarding-fr.html's required-documents list, which concerns proof of address and not remote work."
+    },
+    {
+      "id": "referral_nonadmin",
+      "split": "development",
+      "answerable": false,
+      "negative_kind": "withheld_by_authorization",
+      "answerability_basis": "The referral bonus ('prime de cooptation', fifteen hundred euros gross) appears only in whitecape-remuneration-fr.html, which states 'diffusion restreinte' and is therefore admin_only. For a non-admin the §5 filter correctly withholds it, so no authorized evidence can answer. The paired case referral_admin is labeled answerable from this same source, which is what makes the pair a privilege-boundary test rather than a corpus-coverage test."
+    },
+    {
+      "id": "salary_nonadmin",
+      "split": "development",
+      "answerable": false,
+      "negative_kind": "withheld_by_authorization",
+      "answerability_basis": "The salary grid lives only in whitecape-remuneration-fr.html, explicitly marked 'diffusion restreinte' and indexed as admin_only. For a non-admin the §5 filter correctly withholds every relevant chunk. Paired with salary_admin, which is answerable from the same document."
+    },
+    {
+      "id": "unsupported_weather",
+      "split": "development",
+      "answerable": false,
+      "negative_kind": "absent_from_corpus",
+      "answerability_basis": "External weather data is outside the corpus domain entirely. No indexed document concerns weather, Tokyo, or any external data feed. This is the cleanest available negative and the only one Codex's own basis already treated as near-certain."
+    },
+    {
+      "id": "holdout_travel_expenses",
+      "split": "held_out",
+      "answerable": false,
+      "negative_kind": "absent_from_corpus",
+      "answerability_basis": "The query asks for a hotel reimbursement cap for business travel. No indexed document states any reimbursement amount or cap. Searched frais de deplacement / note de frais / kilometrique / plafond; 'Note de frais' occurs once in askgo-621x-fr.html as a UI feature label, not a policy amount, and the three policy documents contain no travel-expense section."
+    },
+    {
+      "id": "holdout_parental_leave",
+      "split": "held_out",
+      "answerable": false,
+      "negative_kind": "absent_from_corpus",
+      "answerability_basis": "'conge parental' / parental / maternite / paternite appear in no indexed document. whitecape-onboarding-fr.html covers annual-leave notice only, which is why the separate holdout_leave_notice case is answerable while this one is not."
+    }
+  ],
+  "left_unknown": [],
+  "limitations": [
+    "Source-grounded by a model, not by an independent human reviewer. The term searches are reproducible; the judgement that a feature label is not a policy amount is not mechanical.",
+    "Negatives of kind withheld_by_authorization are user-scoped, not corpus-scoped. The same query from an admin is a positive case.",
+    "Establishing absence by term search can miss a paraphrase that uses none of the searched terms."
+  ]
+}

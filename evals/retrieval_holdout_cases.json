@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "split": "held_out",
+  "scope": "Reserved within-corpus questions, not a document-disjoint benchmark or human-labeled gold set. Do not run until the pruning policy is frozen on development evidence. Some cases may be unanswerable; establish that from authorized source documents, not retrieval failure. Known request-creation, replenishment-generation, entry-copy, invoice-bulk-edit, contract-creation, SSO, test-coverage, defect-severity, salary-grid, referral-bonus, remote-work, and weather intents are excluded.",
+  "cases": [
+    {"id": "holdout_stock_issue_grouping", "query": "Comment générer des sorties de stock distinctes pour un magasin central et un magasin local ?", "role": "developer", "is_admin": false, "intent_family": "stock_issue_grouping"},
+    {"id": "holdout_request_order_button", "query": "Quelles conditions rendent le bouton Créer commande visible sur une demande acceptée ?", "role": "developer", "is_admin": false, "intent_family": "request_to_order_eligibility"},
+    {"id": "holdout_folder_assignment", "query": "Comment affecter automatiquement les lignes d'une demande à un dossier d'achat lors de son acceptation ?", "role": "developer", "is_admin": false, "intent_family": "folder_assignment_rules"},
+    {"id": "holdout_closed_request_search", "query": "Comment inclure les demandes clôturées dans une recherche et filtrer celles qui ne sont pas liées à une commande ?", "role": "developer", "is_admin": false, "intent_family": "request_search_filters"},
+    {"id": "holdout_invoice_paid_scheduler", "query": "Comment activer l'ajout périodique du tag payed aux factures ?", "role": "developer", "is_admin": false, "intent_family": "invoice_paid_scheduler"},
+    {"id": "holdout_notification_scheduler", "query": "Que faut-il configurer pour démarrer une tâche planifiée de notification dans Ask&Go ?", "role": "developer", "is_admin": false, "intent_family": "notification_scheduler"},
+    {"id": "holdout_replacement_identity", "query": "Après connexion comme utilisateur remplacé, comment revenir à son propre compte et quels droits s'appliquent pendant le remplacement ?", "role": "developer", "is_admin": false, "intent_family": "replacement_user_session"},
+    {"id": "holdout_leave_notice", "query": "Quel préavis faut-il respecter pour déposer une demande de congés chez Whitecape et qui la valide ?", "role": "developer", "is_admin": false, "intent_family": "leave_request_notice"},
+    {"id": "holdout_sickness_notice", "query": "Qui faut-il prévenir en cas d'arrêt maladie et dans quel délai faut-il transmettre l'arrêt ?", "role": "qa_engineer", "is_admin": false, "intent_family": "sickness_notification"},
+    {"id": "holdout_issued_equipment", "query": "Quel matériel est remis à un nouveau collaborateur et à qui appartient-il ?", "role": "qa_engineer", "is_admin": false, "intent_family": "issued_equipment"},
+    {"id": "holdout_initial_password", "query": "Qu'est-ce qui déclenche la création du compte interne et que faut-il faire du mot de passe initial ?", "role": "developer", "is_admin": false, "intent_family": "account_provisioning"},
+    {"id": "holdout_incident_escalation", "query": "Après combien de temps un incident bloquant non résolu est-il escaladé, et à qui ?", "role": "qa_engineer", "is_admin": false, "intent_family": "incident_escalation"},
+    {"id": "holdout_travel_expenses", "query": "Quel plafond de remboursement s'applique aux frais d'hôtel lors d'un déplacement professionnel ?", "role": "developer", "is_admin": false, "intent_family": "travel_expenses"},
+    {"id": "holdout_parental_leave", "query": "Quelle est la durée du congé parental chez Whitecape et quelles sont les conditions d'ancienneté ?", "role": "qa_engineer", "is_admin": false, "intent_family": "parental_leave"}
+  ]
+}

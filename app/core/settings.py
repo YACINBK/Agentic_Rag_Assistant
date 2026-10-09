@@ -1,3 +1,4 @@
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -109,7 +110,31 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_BYTES: int = 209715200  # 200 MiB
 
     # --- Relevance gate ---
-    RELEVANCE_THRESHOLD: float = 0.5
+    # Both values are measured, not guessed — see evals/gate_threshold_result.json
+    # and evals/pruning_policy.json. Scores here are TEI /rerank outputs, which are
+    # sigmoid-normalised to (0,1) because bge-reranker-v2-m3 is a single-label model
+    # (`/info` reports id2label {"0": "LABEL_0"}); node_04 overwrites the Qdrant
+    # cosine score with them, so both thresholds live on that scale.
+    #
+    # 0.1 is the unique threshold scoring sensitivity 1.0 AND specificity 1.0 on
+    # both the development and held-out splits. The previous 0.5 sat at the top
+    # edge of its plateau: it was perfect on development but rejected one
+    # answerable held-out question whose direct evidence scored 0.1192. Nearest
+    # failures are 0.05 (a development false positive) and 0.2 (that held-out
+    # false negative), so this is the middle of the usable band, not an edge.
+    RELEVANCE_THRESHOLD: float = Field(default=0.1, ge=0.0, le=1.0)
+    # Drops candidates the reranker scored as near-noise before they reach the
+    # generator. 0 disables pruning entirely (node_05 short-circuits). 0.025 cuts
+    # context ~46% with direct-evidence recall still 1.000 across the sweep, and
+    # strictly dominates 0.01 — identical support-evidence loss, more reduction,
+    # better precision.
+    CONTEXT_PRUNE_THRESHOLD: float = Field(default=0.025, ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def validate_context_prune_threshold(self) -> "Settings":
+        if self.CONTEXT_PRUNE_THRESHOLD > self.RELEVANCE_THRESHOLD:
+            raise ValueError("CONTEXT_PRUNE_THRESHOLD must not exceed RELEVANCE_THRESHOLD")
+        return self
 
     # `.env` carries Docker Compose service names; `.env.local` (gitignored)
     # overrides them with localhost for tooling run from the host venv. Last file

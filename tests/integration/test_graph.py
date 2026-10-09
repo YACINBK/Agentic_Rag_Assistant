@@ -186,3 +186,41 @@ class TestGraphIntegration:
         # Security-relevant: a silently dropped privilege flag would make node 3
         # fall back to whatever the retrieval path defaults to, unnoticed.
         assert result["user_is_admin"] is False
+
+    async def test_pruned_context_reaches_generator_with_aligned_citations(self) -> None:
+        noise = make_chunk(text="Unrelated payroll information.", score=0.4)
+        direct = make_chunk(
+            text="Annual leave is 25 days.", score=0.3,
+            section_path="Leave > Entitlement", anchor="leave-entitlement",
+            image_refs=["leave-image"],
+        )
+        support = make_chunk(text="Request leave in the employee portal.", score=0.2)
+        generator = MockLLMService(
+            response="Annual leave is 25 days [1]. Request leave in the employee portal [2]."
+        )
+        nodes = _build_nodes(
+            vector_store=MockVectorStore(results=[noise, direct, support]),
+            reranker=MockReranker(scores=[0.00075, 0.95, 0.29]),
+            llm_generator=generator,
+            settings=Settings(CONTEXT_PRUNE_THRESHOLD=0.1),
+        )
+
+        result = await build_pipeline(nodes).ainvoke(_make_input())
+
+        assert result["relevance_pass"] is True
+        assert len(result["retrieved_chunks"]) == 3
+        assert [chunk["chunk_id"] for chunk in result["reranked_chunks"]] == [
+            direct["chunk_id"], support["chunk_id"],
+        ]
+        assert len(generator.calls) == 1
+        prompt = generator.calls[0]["messages"][1]["content"]
+        assert noise["text"] not in prompt
+        assert f"[1] {direct['text']}" in prompt
+        assert f"[2] {support['text']}" in prompt
+        assert [citation["chunk_id"] for citation in result["citations"]] == [
+            direct["chunk_id"], support["chunk_id"],
+        ]
+        assert result["citations"][0]["section_path"] == direct["section_path"]
+        assert result["citations"][0]["anchor"] == direct["anchor"]
+        assert result["citations"][0]["image_refs"] == direct["image_refs"]
+        assert result["is_faithful"] is True
