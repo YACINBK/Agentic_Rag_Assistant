@@ -68,6 +68,27 @@ class QdrantVectorStore(BaseVectorStore):
                 section_path=point.payload.get("section_path", ""),
                 anchor=point.payload.get("anchor", ""),
                 image_refs=point.payload.get("image_refs", []),
+                # BookStack provenance + Stage C enrichment. Previously written at
+                # index time and never projected, so every retrieval paid the
+                # ingestion cost and threw the result away. See ChunkPayload for
+                # which consumers these are for, and why `allowed_roles` is
+                # deliberately absent while `admin_only` is present.
+                page_id=point.payload.get("page_id", ""),
+                page_title=point.payload.get("page_title", ""),
+                chapter_id=point.payload.get("chapter_id", ""),
+                chapter_title=point.payload.get("chapter_title", ""),
+                related_anchors=point.payload.get("related_anchors", []),
+                table_count=point.payload.get("table_count", 0),
+                doc_hash=point.payload.get("doc_hash", ""),
+                applies_to=point.payload.get("applies_to", []),
+                contextual_header=point.payload.get("contextual_header", ""),
+                is_generalized_procedure=point.payload.get(
+                    "is_generalized_procedure", False
+                ),
+                # Mirrors Document.restricted. Projected for D5's deferred precise
+                # cache rule. MUST NOT be used to filter results here — the §5
+                # boundary is the query-time filter above, not a Python re-check.
+                admin_only=point.payload.get("admin_only", False),
                 # Cache-only projection: present on semantic_cache entries
                 # (M10 writes them), empty on document chunks — the cached path
                 # rebuilds its citations from this.

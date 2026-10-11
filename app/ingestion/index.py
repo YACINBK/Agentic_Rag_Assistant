@@ -144,7 +144,13 @@ def _build_payload(
         "page_number": page_number,
         "chunk_index": chunk.chunk_index,
         "doc_hash": doc_hash,
-        # --- BookStack provenance, read by the citation hover card ---
+        # --- BookStack provenance ---
+        # [2026-10-11] The hover card renders the `section_path` breadcrumb, not
+        # these individual id/title fields; the earlier comment here claimed they
+        # were "read by the citation hover card", which was not true of any of
+        # them. They are now projected into ChunkPayload by QdrantVectorStore
+        # (previously they were written and unreadable), for the Investigator's
+        # source-section fetch rather than for citation rendering.
         "page_id": chunk.page_id,
         "page_title": chunk.page_title,
         "chapter_id": chunk.chapter_id,

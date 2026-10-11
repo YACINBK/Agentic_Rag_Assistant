@@ -26,6 +26,45 @@ class ChunkPayload(TypedDict):
     anchor: NotRequired[str]  # bkmrk-*/page-* deep-link target; "" if absent
     image_refs: NotRequired[list[dict]]  # [{image_id, anchor}] for this chunk
 
+    # --- BookStack provenance and Stage C enrichment ---
+    #
+    # These were written into the Qdrant payload by app/ingestion/index.py and then
+    # dropped on the floor: QdrantVectorStore.search built a ChunkPayload without
+    # them, so every retrieval paid the ingestion cost and discarded the result.
+    # Projected here so the data is reachable; no node reads them yet, and that is
+    # deliberate — the Investigator's candidate tools (query-time use of
+    # applicability metadata, and a source-section fetch) are what consume them,
+    # and they need the handles to exist before they can be built.
+    #
+    # Applicability must NOT become an exclusive filter that discards untagged
+    # material. `applies_to` holds module names, never roles — it is not a security
+    # field and carries no authorization meaning.
+    page_id: NotRequired[str]
+    page_title: NotRequired[str]
+    chapter_id: NotRequired[str]
+    chapter_title: NotRequired[str]
+    related_anchors: NotRequired[list[str]]
+    table_count: NotRequired[int]
+    doc_hash: NotRequired[str]  # corpus-version anchor for the owning document
+    applies_to: NotRequired[list[str]]  # module names — NOT roles
+    contextual_header: NotRequired[str]  # prepended to the embedded text; debug only
+    is_generalized_procedure: NotRequired[bool]
+
+    # `admin_only` is projected; `allowed_roles` is deliberately NOT, and the
+    # asymmetry is a decision rather than an oversight.
+    #
+    # admin_only has a named consumer in waiting: D5 deferred the precise cache
+    # rule — `any(chunk.admin_only for chunk in chunks_used)`, so an admin's answer
+    # grounded purely in unrestricted chunks stays shareable — explicitly because
+    # the field was absent from ChunkPayload. This unblocks it.
+    #
+    # allowed_roles has no consumer, and putting it within reach of Python invites
+    # exactly the post-retrieval filtering CLAUDE.md §12 forbids. The §5 boundary is
+    # enforced inside the vector query; code that can read the scope downstream is
+    # code that can be tempted to re-check it there, badly. Neither field may be
+    # used to filter results after retrieval.
+    admin_only: NotRequired[bool]
+
     # --- Cache-only: a semantic_cache hit carries the citations the original
     # answer was generated with, so the cached path renders with the same
     # hover cards, sources and images as the full pipeline (found live
