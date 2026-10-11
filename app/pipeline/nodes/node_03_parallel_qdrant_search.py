@@ -48,4 +48,29 @@ class QdrantSearchNode(BaseNode):
         except Exception as e:
             raise RetrievalError(f"Vector search failed: {e}") from e
 
+        # On a retry pass, ACCUMULATE instead of replacing.
+        #
+        # The retry (node 05b) broadens the query and re-enters here. Overwriting
+        # `retrieved_chunks` meant a broadened search returning worse candidates
+        # silently discarded better ones from the first attempt — the gate then
+        # judged the second pass alone and could decline a question the first pass
+        # had already found evidence for. Nothing anywhere recovered the lost set.
+        #
+        # Union of the CANDIDATE pool, not of the reranked lists, and that
+        # distinction is the whole point. Reranker scores are only comparable
+        # within one query: attempt 1's chunks were scored against the original
+        # rewritten query, attempt 2's against the broadened one. Merging two
+        # scored lists would sort incomparable numbers against each other. Merging
+        # the candidates instead sends the whole union through node 04 in one pass,
+        # where every passage is scored against the same (broadened) query, so the
+        # gate and the prune both see one coherent scale.
+        #
+        # Cost: the retry pass reranks up to 2x QDRANT_SEARCH_LIMIT passages. That
+        # falls on the retry path only, which exists precisely because the first
+        # answer was not good enough.
+        previous = state.get("retrieved_chunks") or []
+        if previous and state.get("retry_attempted"):
+            seen = {chunk["chunk_id"] for chunk in chunks}
+            chunks = chunks + [c for c in previous if c["chunk_id"] not in seen]
+
         return {**state, "retrieved_chunks": chunks}
