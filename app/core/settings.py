@@ -71,6 +71,22 @@ class Settings(BaseSettings):
     # offload and a cold model load costs 30–60 s, so a legitimate generator call can
     # take minutes. 600 s distinguishes "hung" from "slow", which is all it is for.
     LLM_TIMEOUT_SECONDS: float = 600.0
+    # Bounded retry on transient transport failures, applied in LiteLLMService
+    # (the §4 funnel) so no node carries its own policy. Closes D31.
+    #
+    # Why this is not optional: Stage C enrichment makes ~472 sequential calls per
+    # document and one failure discards the whole document's enrichment. At 99.5%
+    # per-call success, 0.995^472 = 0.094 — roughly one document in eleven would
+    # ever finish. Three attempts take that to ~0.9999 while only ~2.4 of 472 calls
+    # retry at all, so the expected added wall-clock is seconds against a job
+    # measured in tens of minutes.
+    #
+    # Only transient errors are retried (explicit allowlist in app/services/llm.py):
+    # a broad retry would swallow Celery's SoftTimeLimitExceeded and keep going past
+    # the deadline, which is precisely the signal the soft limit exists to deliver.
+    LLM_MAX_ATTEMPTS: int = Field(default=3, ge=1, le=10)
+    # Exponential: attempt N waits base * 2^(N-1). With the default, 1s then 2s.
+    LLM_RETRY_BASE_DELAY_SECONDS: float = Field(default=1.0, ge=0.0, le=60.0)
 
     # --- Embeddings (BGE-M3 via Ollama) ---
     OLLAMA_BASE_URL: str = "http://localhost:11434"
