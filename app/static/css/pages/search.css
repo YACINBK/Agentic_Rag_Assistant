@@ -1,6 +1,5 @@
-/* Search page styles — loaded via {% block head %} in pages/search.html */
+/* Search page — chat surface. Loaded via {% block head %} in pages/search.html */
 
-/* Layout */
 .search-page h1 {
     margin-bottom: 1.5rem;
 }
@@ -10,80 +9,114 @@
     margin-bottom: 2rem;
 }
 
-/* Message bubbles */
-.message-bubble,
-.query-bubble {
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
-    max-width: 80%;
+/* ── Message bubbles ────────────────────────────────────────────────────── */
+
+.query-bubble,
+.message-bubble {
+    padding: 0.7rem 1rem;
+    border-radius: 14px;
+    margin-bottom: 0.85rem;
+    max-width: 82%;
 }
 
-.message-user {
-    background: #0066cc;
+.query-bubble.message-user {
+    background: var(--accent);
     color: #fff;
     margin-left: auto;
+    border-bottom-right-radius: 4px;
 }
 
-.message-user .query-text {
+.query-bubble .query-text {
     margin: 0;
 }
 
-.message-assistant {
-    background: #fff;
-    border: 1px solid #e0e0e0;
+.message-bubble.message-assistant {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
     margin-right: auto;
+    border-bottom-left-radius: 4px;
 }
 
 .message-content {
-    line-height: 1.6;
+    line-height: 1.65;
     white-space: pre-wrap;
+    overflow-wrap: break-word;
 }
 
-/* Sources */
+/* ── Sources ────────────────────────────────────────────────────────────── */
+
 .message-sources {
-    margin-top: 0.75rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid #eee;
+    margin-top: 0.85rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--border);
 }
 
 .sources-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #666;
+    font-size: 0.7rem;
+    font-weight: 650;
+    color: var(--text-faint);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
 }
 
 .sources-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: 0.4rem;
+    margin-top: 0.45rem;
 }
 
 .source-card {
-    display: inline-block;
-    padding: 0.25rem 0.625rem;
-    background: #f0f0f0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    background: var(--neutral-soft);
+    border: 1px solid var(--border);
+    border-radius: 6px;
     font-size: 0.75rem;
-    color: #444;
+    font-weight: 500;
+    color: var(--text-soft);
 }
 
-/* Progress indicator */
+/* ── Progress — muted line with a breathing dot (pure CSS) ──────────────── */
+
 .progress {
-    padding: 0.75rem 1rem;
-    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.25rem;
+    color: var(--text-faint);
+    font-size: 0.85rem;
     font-style: italic;
 }
 
-/* Error container (reused by SSE error events) */
+.progress:not(:empty)::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.1s ease-in-out infinite;
+    flex: none;
+}
+
+.progress:empty::before {
+    content: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.35; transform: scale(0.85); }
+    50%      { opacity: 1;    transform: scale(1); }
+}
+
+/* ── Error container (reused by SSE error events) ───────────────────────── */
+
 .error-container {
     padding: 0.75rem 1rem;
-    background: #fff5f5;
-    border: 1px solid #f5c6c6;
-    border-radius: 8px;
-    color: #a30000;
+    background: var(--danger-soft);
+    border: 1px solid #f2c1bd;
+    border-radius: var(--radius-sm);
+    color: var(--danger-strong);
+    font-size: 0.9rem;
 }

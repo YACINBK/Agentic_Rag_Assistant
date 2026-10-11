@@ -1,182 +1,365 @@
-/* Base styles */
-*, *::before, *::after {
+/* ─────────────────────────────────────────────────────────────────────────────
+   Whitecape Knowledge Assistant — design system
+   Light, professional, minimal. An internal tool: quiet surfaces, one accent,
+   no decoration that doesn't earn its place.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+    /* Surfaces & text */
+    --bg: #f7f8fa;
+    --surface: #ffffff;
+    --border: #e4e7ec;
+    --border-strong: #d0d5dd;
+    --text: #1a2233;
+    --text-soft: #5c6674;
+    --text-faint: #98a2b3;
+
+    /* Accent & states */
+    --accent: #2f6fed;
+    --accent-strong: #1f5bd6;
+    --accent-soft: #eef3fe;
+    --danger: #d92d20;
+    --danger-strong: #b42318;
+    --danger-soft: #fef1f0;
+    --ok: #067647;
+    --ok-soft: #e8f5ef;
+    --warn: #b54708;
+    --warn-soft: #fdf3e7;
+    --neutral-soft: #f2f4f7;
+
+    /* Shape & motion */
+    --radius: 10px;
+    --radius-sm: 8px;
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --shadow-md: 0 4px 14px rgba(16, 24, 40, 0.10);
+
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter,
+        "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+}
+
+html {
+    font-size: 15px;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    line-height: 1.6;
-    color: #1a1a1a;
-    background: #f8f9fa;
+    margin: 0;
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
 }
 
-/* Navigation */
+h1, h2, h3 {
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.5rem;
+}
+
+h1 { font-size: 1.6rem; font-weight: 650; }
+h2 { font-size: 1.25rem; font-weight: 600; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-strong); }
+
+code, pre {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    background: var(--neutral-soft);
+    border-radius: 4px;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+
+.content {
+    max-width: 860px;
+    margin: 2.5rem auto;
+    padding: 0 1.5rem;
+}
+
+/* ── Navigation ─────────────────────────────────────────────────────────── */
+
 .nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1.5rem;
-    background: #fff;
-    border-bottom: 1px solid #e0e0e0;
+    height: 56px;
+    padding: 0 1.5rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 20;
 }
 
 .nav-brand {
-    font-weight: 600;
-    color: #1a1a1a;
-    text-decoration: none;
+    font-weight: 650;
+    font-size: 1rem;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* A quiet mark: two stacked bars, accent + slate — pure CSS, no asset. */
+.nav-brand::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    background:
+        linear-gradient(
+            to bottom,
+            var(--accent) 0 50%,
+            var(--text) 50% 100%
+        );
 }
 
 .nav-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
-}
-
-.nav-user {
-    color: #666;
-    font-size: 0.875rem;
+    gap: 1.25rem;
 }
 
 .nav-link {
-    color: #0066cc;
-    text-decoration: none;
-    font-size: 0.875rem;
-}
-
-/* Content */
-.content {
-    max-width: 960px;
-    margin: 2rem auto;
-    padding: 0 1.5rem;
-}
-
-/* Buttons */
-.btn {
-    display: inline-block;
-    padding: 0.5rem 1.25rem;
-    border-radius: 4px;
-    text-decoration: none;
-    font-size: 0.875rem;
+    color: var(--text-soft);
+    font-size: 0.925rem;
     font-weight: 500;
+    padding: 0.25rem 0;
+    border-bottom: 2px solid transparent;
+    transition: color 120ms ease;
+}
+
+.nav-link:hover {
+    color: var(--text);
+    background: none;
+}
+
+.nav .nav-link[href]:hover {
+    border-bottom-color: var(--border-strong);
+}
+
+.nav-user {
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1.1rem;
+    min-height: 36px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 550;
+    text-decoration: none;
     cursor: pointer;
-    border: none;
+    transition: background 120ms ease, border-color 120ms ease,
+        box-shadow 120ms ease;
+}
+
+.btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.28);
 }
 
 .btn-primary {
-    background: #0066cc;
+    background: var(--accent);
+    border-color: var(--accent);
     color: #fff;
 }
 
 .btn-primary:hover {
-    background: #0052a3;
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    color: #fff;
 }
 
 .btn-secondary {
-    background: #e0e0e0;
-    color: #1a1a1a;
+    background: var(--surface);
+    border-color: var(--border-strong);
+    color: var(--text);
 }
 
 .btn-secondary:hover {
-    background: #c9c9c9;
+    background: var(--neutral-soft);
+    color: var(--text);
 }
 
 .btn-danger {
-    background: #cc0000;
+    background: var(--danger);
+    border-color: var(--danger);
     color: #fff;
 }
 
 .btn-danger:hover {
-    background: #a30000;
+    background: var(--danger-strong);
+    border-color: var(--danger-strong);
+    color: #fff;
 }
 
-/* Forms */
+.btn[disabled], .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ── Badges & status pills ──────────────────────────────────────────────── */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--neutral-soft);
+    color: var(--text-soft);
+}
+
+.badge-admin { background: var(--accent-soft); color: var(--accent-strong); }
+.badge-owner { background: var(--warn-soft); color: var(--warn); }
+
+.status-pending { background: var(--warn-soft); color: var(--warn); }
+.status-running { background: var(--accent-soft); color: var(--accent-strong); }
+.status-done    { background: var(--ok-soft); color: var(--ok); }
+.status-failed  { background: var(--danger-soft); color: var(--danger-strong); }
+
+.document-restricted { background: var(--danger-soft); color: var(--danger-strong); }
+
+/* ── Forms ──────────────────────────────────────────────────────────────── */
+
+label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 550;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+}
+
+.form-input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font: inherit;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.form-input:focus,
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.18);
+}
+
+input[type="file"] {
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 15px;
+    height: 15px;
+}
+
 .form-group {
     margin-bottom: 1rem;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 0.25rem;
-    font-size: 0.875rem;
+.form-group-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-weight: 500;
-    color: #1a1a1a;
+    color: var(--text-soft);
+    cursor: pointer;
 }
 
-.form-group input {
-    display: block;
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    line-height: 1.4;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: #0066cc;
-    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
-}
-
-.form-group.has-error input {
-    border-color: #cc0000;
-}
-
-.form-group.has-error input:focus {
-    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
-}
+.has-error .form-input { border-color: var(--danger); }
 
 .error-text {
     display: block;
-    margin-top: 0.25rem;
-    font-size: 0.75rem;
-    color: #cc0000;
+    margin-top: 0.3rem;
+    font-size: 0.8rem;
+    color: var(--danger-strong);
 }
 
-/* Badges */
-.badge {
-    display: inline-block;
-    padding: 0.125rem 0.5rem;
-    border-radius: 3px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    vertical-align: middle;
-    margin-left: 0.5rem;
-}
+/* ── Landing (public entry) ─────────────────────────────────────────────── */
 
-.badge-admin {
-    background: #e8f0fe;
-    color: #1a56db;
-}
-
-.badge-owner {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-/* Landing (public entry — the Login button lives here) */
 .landing-container {
+    max-width: 460px;
+    margin: 14vh auto 0;
+    padding: 0 1.5rem;
     text-align: center;
-    margin-top: 4rem;
 }
 
-.landing-container h1 {
-    margin-bottom: 0.5rem;
+.landing-branding h1 {
+    font-size: clamp(1.7rem, 4vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.35rem;
 }
 
-.landing-container p {
-    margin-bottom: 1.5rem;
-    color: #666;
+.branding-subtitle {
+    color: var(--text-soft);
+    font-size: 1.02rem;
+    margin: 0 0 2.25rem;
 }
 
-/* Dashboard */
-.dashboard h1 {
-    margin-bottom: 0.5rem;
+.landing-container > p {
+    color: var(--text-soft);
+    margin: 0 0 2rem;
 }
+
+.landing-container .btn {
+    min-height: 42px;
+    padding: 0.6rem 2.25rem;
+    font-size: 0.95rem;
+}
+
+/* ── Dashboard ──────────────────────────────────────────────────────────── */
+
+.dashboard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 2rem;
+    max-width: 560px;
+}
+
+.dashboard h1 { font-size: 1.35rem; }
 
 .dashboard p {
-    margin-bottom: 1.5rem;
-    color: #666;
+    margin: 0 0 1.5rem;
+    color: var(--text-soft);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }

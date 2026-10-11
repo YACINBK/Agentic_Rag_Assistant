@@ -28,7 +28,10 @@ Constraints (see ``contracts/ingestion_enrich.md`` and CLAUDE.md §4/§12):
 - Input ``Chunk`` objects are never mutated; enrichment is returned on the new
   ``EnrichedChunk`` type.
 - No Qdrant, no embeddings, no tokenizer, no network here — those are Stage E.
-- One attempt per LLM call; a failure raises ``EnrichmentError`` (no retry).
+- One attempt per LLM call *at this layer*; a failure raises ``EnrichmentError``.
+  Since D31 the transport below retries transient errors (three attempts,
+  allowlisted, in ``LiteLLMService.complete``), so an ``EnrichmentError`` here
+  means the transport gave up — not that one request was lost.
 """
 
 from __future__ import annotations

@@ -32,3 +32,12 @@ class AuthorizationError(Exception):
 
 class FileValidationError(Exception):
     """Upload rejected — extension outside ALLOWED_EXTENSIONS or other validation failure."""
+
+
+class LLMServiceError(Exception):
+    """The LLM transport produced no usable content.
+
+    Raised by LiteLLMService when a structurally valid response carries empty
+    text. Retryable at the transport layer (D31); if it escapes, every attempt
+    came back empty.
+    """

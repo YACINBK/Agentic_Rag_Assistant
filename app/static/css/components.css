@@ -10,34 +10,45 @@
     display: inline;
 }
 
+/* The marker reads as a small pill, superscript-aligned — quiet until hovered. */
 .cite-marker {
-    color: #1a4b8c;
+    display: inline-block;
+    font-size: 0.68em;
+    font-weight: 650;
+    line-height: 1;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 0.2em 0.45em;
+    margin: 0 0.1em;
+    vertical-align: super;
     text-decoration: none;
-    font-weight: 600;
     cursor: pointer;
-    padding: 0 1px;
+    transition: background 120ms ease, color 120ms ease;
 }
 
 .cite-marker:hover,
 .cite-marker:focus {
-    text-decoration: underline;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
 }
 
 .cite-card {
     position: absolute;
     left: 0;
-    top: 1.5em;
+    top: 1.9em;
     z-index: 10;
-    width: 360px;
+    width: 380px;
     max-width: 90vw;
     /* Chunk text is up to 800 tokens — clamp height, never truncate server-side. */
-    max-height: 320px;
+    max-height: 340px;
     overflow: auto;
-    padding: 12px 14px;
-    background: #ffffff;
-    border: 1px solid #333333;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
     font-weight: 400;
     text-align: left;
     white-space: normal;
@@ -45,21 +56,27 @@
 
 .cite-crumb {
     display: block;
-    font-size: 0.8rem;
-    color: #555555;
-    margin-bottom: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
 }
 
 .cite-text {
     display: block;
-    font-size: 0.9rem;
-    line-height: 1.4;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text);
 }
 
-.cite-card img {
+.cite-card img,
+.cite-img {
     display: block;
     max-width: 100%;
     height: auto;
-    margin-top: 8px;
-    border: 1px solid #cccccc;
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
 }

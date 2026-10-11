@@ -1,3 +1,4 @@
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -70,6 +71,22 @@ class Settings(BaseSettings):
     # offload and a cold model load costs 30–60 s, so a legitimate generator call can
     # take minutes. 600 s distinguishes "hung" from "slow", which is all it is for.
     LLM_TIMEOUT_SECONDS: float = 600.0
+    # Bounded retry on transient transport failures, applied in LiteLLMService
+    # (the §4 funnel) so no node carries its own policy. Closes D31.
+    #
+    # Why this is not optional: Stage C enrichment makes ~472 sequential calls per
+    # document and one failure discards the whole document's enrichment. At 99.5%
+    # per-call success, 0.995^472 = 0.094 — roughly one document in eleven would
+    # ever finish. Three attempts take that to ~0.9999 while only ~2.4 of 472 calls
+    # retry at all, so the expected added wall-clock is seconds against a job
+    # measured in tens of minutes.
+    #
+    # Only transient errors are retried (explicit allowlist in app/services/llm.py):
+    # a broad retry would swallow Celery's SoftTimeLimitExceeded and keep going past
+    # the deadline, which is precisely the signal the soft limit exists to deliver.
+    LLM_MAX_ATTEMPTS: int = Field(default=3, ge=1, le=10)
+    # Exponential: attempt N waits base * 2^(N-1). With the default, 1s then 2s.
+    LLM_RETRY_BASE_DELAY_SECONDS: float = Field(default=1.0, ge=0.0, le=60.0)
 
     # --- Embeddings (BGE-M3 via Ollama) ---
     OLLAMA_BASE_URL: str = "http://localhost:11434"
@@ -109,7 +126,31 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_BYTES: int = 209715200  # 200 MiB
 
     # --- Relevance gate ---
-    RELEVANCE_THRESHOLD: float = 0.5
+    # Both values are measured, not guessed — see evals/gate_threshold_result.json
+    # and evals/pruning_policy.json. Scores here are TEI /rerank outputs, which are
+    # sigmoid-normalised to (0,1) because bge-reranker-v2-m3 is a single-label model
+    # (`/info` reports id2label {"0": "LABEL_0"}); node_04 overwrites the Qdrant
+    # cosine score with them, so both thresholds live on that scale.
+    #
+    # 0.1 is the unique threshold scoring sensitivity 1.0 AND specificity 1.0 on
+    # both the development and held-out splits. The previous 0.5 sat at the top
+    # edge of its plateau: it was perfect on development but rejected one
+    # answerable held-out question whose direct evidence scored 0.1192. Nearest
+    # failures are 0.05 (a development false positive) and 0.2 (that held-out
+    # false negative), so this is the middle of the usable band, not an edge.
+    RELEVANCE_THRESHOLD: float = Field(default=0.1, ge=0.0, le=1.0)
+    # Drops candidates the reranker scored as near-noise before they reach the
+    # generator. 0 disables pruning entirely (node_05 short-circuits). 0.025 cuts
+    # context ~46% with direct-evidence recall still 1.000 across the sweep, and
+    # strictly dominates 0.01 — identical support-evidence loss, more reduction,
+    # better precision.
+    CONTEXT_PRUNE_THRESHOLD: float = Field(default=0.025, ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def validate_context_prune_threshold(self) -> "Settings":
+        if self.CONTEXT_PRUNE_THRESHOLD > self.RELEVANCE_THRESHOLD:
+            raise ValueError("CONTEXT_PRUNE_THRESHOLD must not exceed RELEVANCE_THRESHOLD")
+        return self
 
     # `.env` carries Docker Compose service names; `.env.local` (gitignored)
     # overrides them with localhost for tooling run from the host venv. Last file

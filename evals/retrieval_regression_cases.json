@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "split": "development_regression",
+  "scope": "Known shared-procedure regressions derived from reviewed order-copy evidence, not held-out questions. Expected IDs are corpus-version-specific evidence anchors, not a complete set of relevant chunks.",
+  "cases": [
+    {
+      "id": "shared_copy_request",
+      "query": "Comment copier une demande lorsque son code procédure n'est plus en vie ?",
+      "role": "developer",
+      "is_admin": false,
+      "intent_family": "entry_copy",
+      "expected_chunk_ids": ["039602fe-a54d-5476-8b91-faebd51cfdac"],
+      "evidence_basis": "The order-copy section explicitly applies the same procedure to requests and invoices."
+    },
+    {
+      "id": "shared_copy_invoice",
+      "query": "Comment copier une facture lorsque son code procédure n'est plus en vie ?",
+      "role": "developer",
+      "is_admin": false,
+      "intent_family": "entry_copy",
+      "expected_chunk_ids": ["039602fe-a54d-5476-8b91-faebd51cfdac"],
+      "evidence_basis": "The order-copy section explicitly applies the same procedure to requests and invoices."
+    }
+  ]
+}
