@@ -1,4 +1,4 @@
-##Secure Agentic RAG Knowledge Assistant
+## Secure Agentic RAG Knowledge Assistant
 
 An internal, role-aware RAG assistant. Employees ask
 questions in natural language; the system retrieves matching passages from the
