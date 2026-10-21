@@ -1,6 +1,6 @@
-# Whitecape Knowledge Assistant
+Secure Agentic RAG Knowledge Assistant
 
-An internal, role-aware RAG assistant for Whitecape Technologies. Employees ask
+An internal, role-aware RAG assistant. Employees ask
 questions in natural language; the system retrieves matching passages from the
 indexed company corpus, streams a **cited** answer over SSE, and refuses to
 answer when the evidence isn't there. Every answer is traceable to a source
